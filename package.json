@@ -16,7 +16,7 @@
   "scripts": {
     "build": "bun build ./src/index.ts --outfile ./dist/cli.js --target node --minify",
     "dev": "bun run src/index.ts",
-    "prepublishOnly": "bumpp && bun run build"
+    "prepublishOnly": "bun run build"
   },
   "keywords": [
     "discord",
