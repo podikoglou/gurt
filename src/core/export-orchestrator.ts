@@ -1,6 +1,12 @@
 import type { MessageService } from "../services/message-service.js";
 import type { ChannelService } from "../services/channel-service.js";
-import type { ExportConfig, ExportResult, ExportProgress } from "../types/export.js";
+import type {
+  ExportConfig,
+  ExportResult,
+  ExportProgress,
+  Exporter,
+  ExporterFactory,
+} from "../types/export.js";
 import type { Snowflake } from "../types/discord.js";
 
 /**
@@ -9,13 +15,13 @@ import type { Snowflake } from "../types/discord.js";
  * Coordinates between:
  * - Message fetching with pagination
  * - Channel validation
- * - Export format handling
+ * - Export format handling via the Exporter lifecycle
  */
 export class ExportOrchestrator {
   constructor(
     private readonly messageService: MessageService,
     private readonly channelService: ChannelService,
-    private readonly exporters: Map<string, any>
+    private readonly exporterFactories: Map<string, ExporterFactory>
   ) {}
 
   async exportChannel(
@@ -27,8 +33,8 @@ export class ExportOrchestrator {
     try {
       this.validateConfig(config);
 
-      const exporter = this.exporters.get(config.format);
-      if (!exporter) {
+      const exporterFactory = this.exporterFactories.get(config.format);
+      if (!exporterFactory) {
         throw new Error(`Unsupported export format: ${config.format}`);
       }
 
@@ -37,26 +43,44 @@ export class ExportOrchestrator {
         throw new Error(`Channel ${config.channelId} not found or inaccessible`);
       }
 
-      const allMessages: unknown[] = [];
+      // Create a fresh exporter instance for this export
+      const exporter = exporterFactory();
 
-      for await (const batch of this.messageService.fetchMessagesPaginated(
-        config.channelId as Snowflake,
-        config,
-        (progress) => {
-          if (onProgress) {
-            onProgress(progress);
+      // Initialize the exporter with output path and options
+      await exporter.open(config.outputPath, {
+        streaming: config.streaming ?? true, // Default to streaming for resumability
+      });
+
+      try {
+        // Stream messages through the exporter
+        for await (const batch of this.messageService.fetchMessagesPaginated(
+          config.channelId as Snowflake,
+          config,
+          (progress) => {
+            if (onProgress) {
+              onProgress(progress);
+            }
           }
+        )) {
+          await exporter.write(batch);
         }
-      )) {
-        allMessages.push(...batch);
+
+        // Finalize the export
+        const result = await exporter.close();
+
+        return {
+          ...result,
+          duration: Date.now() - startTime,
+        };
+      } catch (error) {
+        // Attempt to close the exporter on error to ensure proper cleanup
+        try {
+          await exporter.close();
+        } catch {
+          // Ignore close errors during error handling
+        }
+        throw error;
       }
-
-      const result = await exporter.export(allMessages, config.outputPath);
-
-      return {
-        ...result,
-        duration: Date.now() - startTime,
-      };
     } catch (error) {
       console.error(`Export failed for channel ${config.channelId}:`, error);
       throw error;
@@ -108,12 +132,14 @@ export class ExportOrchestrator {
     output: string;
     format?: string;
     batchSize?: number;
+    streaming?: boolean;
   }): ExportConfig {
     return {
       channelId: args.channel,
       outputPath: args.output,
       format: (args.format as any) || "json",
       batchSize: args.batchSize || 100,
+      streaming: args.streaming ?? true,
     };
   }
 }

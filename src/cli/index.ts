@@ -5,7 +5,8 @@ import { TokenBucketRateLimiter } from "../api/rate-limiter.js";
 import { MessageService } from "../services/message-service.js";
 import { ChannelService } from "../services/channel-service.js";
 import { ExportOrchestrator } from "../core/export-orchestrator.js";
-import { JsonExporter } from "../exporters/json.js";
+import { JsonExporter } from "../exporters/index.js";
+import type { ExporterFactory } from "../types/export.js";
 
 function validateEnvironment(): void {
   if (!process.env.DISCORD_TOKEN) {
@@ -23,13 +24,13 @@ function initializeServices(verbose = false, tokenType: "bot" | "user" = "user")
   const messageService = new MessageService(apiClient);
   const channelService = new ChannelService(apiClient);
 
-  const exporters = new Map<string, any>();
-  exporters.set("json", new JsonExporter());
+  const exporterFactories = new Map<string, ExporterFactory>();
+  exporterFactories.set("json", () => new JsonExporter());
 
   const exportOrchestrator = new ExportOrchestrator(
     messageService,
     channelService,
-    exporters
+    exporterFactories
   );
 
   return {
