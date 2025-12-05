@@ -4,7 +4,6 @@ import type {
   ExportConfig,
   ExportResult,
   ExportProgress,
-  Exporter,
   ExporterFactory,
 } from "../types/export.js";
 import type { Snowflake } from "../types/discord.js";
@@ -115,15 +114,90 @@ export class ExportOrchestrator {
     }
   }
 
-  private formatFileSize(bytes: number): string {
-    if (bytes < 1024) {
-      return `${bytes} B`;
-    } else if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
-    } else if (bytes < 1024 * 1024 * 1024) {
-      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    } else {
-      return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  /**
+   * Continue an export from an existing partial export file
+   *
+   * @param continuePath - Path to the existing export file
+   * @param format - Export format (json, jsonl, csv)
+   * @param channelId - The channel ID (validated against the export file)
+   * @param onProgress - Optional progress callback
+   * @returns Export result with combined message counts
+   */
+  async continueExport(
+    continuePath: string,
+    format: string,
+    channelId: string,
+    onProgress?: (progress: ExportProgress) => void
+  ): Promise<ExportResult> {
+    const startTime = Date.now();
+
+    const exporterFactory = this.exporterFactories.get(format);
+    if (!exporterFactory) {
+      throw new Error(`Unsupported export format: ${format}`);
+    }
+
+    // Create a temporary exporter instance just to parse the resume info
+    const tempExporter = exporterFactory();
+    const resumeInfo = await tempExporter.parseResumeInfo(continuePath);
+
+    // Validate that the provided channel ID matches the export file
+    if (resumeInfo.channelId !== channelId) {
+      throw new Error(
+        `Channel ID mismatch: export file is from channel ${resumeInfo.channelId}, ` +
+        `but you specified channel ${channelId}`
+      );
+    }
+
+    console.log(`Found ${resumeInfo.existingMessageCount} existing messages, resuming...`);
+
+    // Create a fresh exporter for the actual export
+    const exporter = exporterFactory();
+
+    // Initialize in resume mode
+    await exporter.openForResume(continuePath, resumeInfo, {
+      streaming: true, // Always use streaming for resume to ensure data safety
+    });
+
+    try {
+      let newMessageCount = 0;
+
+      // Stream messages through the exporter, starting BEFORE the oldest existing message
+      for await (const batch of this.messageService.fetchMessagesPaginated(
+        channelId as Snowflake,
+        {
+          batchSize: 100,
+          resumeFromMessageId: resumeInfo.lastMessageId,
+        },
+        (progress) => {
+          if (onProgress) {
+            // Report combined progress
+            onProgress({
+              messageCount: resumeInfo.existingMessageCount + progress.messageCount,
+              rate: progress.rate,
+            });
+          }
+        }
+      )) {
+        await exporter.write(batch);
+        newMessageCount += batch.length;
+      }
+
+      // Finalize the export
+      const result = await exporter.close();
+
+      return {
+        ...result,
+        messageCount: resumeInfo.existingMessageCount + newMessageCount,
+        duration: Date.now() - startTime,
+      };
+    } catch (error) {
+      // Attempt to close the exporter on error to ensure proper cleanup
+      try {
+        await exporter.close();
+      } catch {
+        // Ignore close errors during error handling
+      }
+      throw error;
     }
   }
 

@@ -2,6 +2,7 @@ import type {
   Exporter,
   ExporterOptions,
   ExportResult,
+  ResumeInfo,
 } from "../types/export.js";
 
 /**
@@ -23,6 +24,19 @@ export abstract class BaseExporter implements Exporter {
     this.startTime = Date.now();
 
     await this.onOpen();
+  }
+
+  async openForResume(
+    outputPath: string,
+    resumeInfo: ResumeInfo,
+    options: ExporterOptions
+  ): Promise<void> {
+    this.outputPath = this.normalizeOutputPath(outputPath);
+    this.streaming = options.streaming;
+    this.startTime = Date.now();
+
+    // Let subclass handle format-specific resume initialization
+    await this.onOpenForResume(resumeInfo);
   }
 
   async write(messages: unknown[]): Promise<void> {
@@ -57,11 +71,27 @@ export abstract class BaseExporter implements Exporter {
   abstract getMimeType(): string;
 
   /**
+   * Parse an existing export file to extract resume information.
+   * Must be implemented by subclasses.
+   * @throws Error if the file cannot be parsed or contains no messages
+   */
+  abstract parseResumeInfo(filePath: string): Promise<ResumeInfo>;
+
+  /**
    * Called after open() has initialized base state.
    * Override to perform format-specific initialization.
    */
   protected async onOpen(): Promise<void> {
     // Default: no-op, subclasses can override
+  }
+
+  /**
+   * Called after openForResume() has initialized base state.
+   * Override to perform format-specific resume initialization.
+   */
+  protected async onOpenForResume(resumeInfo: ResumeInfo): Promise<void> {
+    // Default: no-op, subclasses must override
+    throw new Error("Resume not implemented for this exporter");
   }
 
   /**

@@ -15,6 +15,22 @@ export interface ExportConfig {
   filters?: any[];
   /** Whether to use streaming mode (write after each batch) or buffered mode (write at end) */
   streaming?: boolean;
+  /** When resuming, the message ID to start fetching before */
+  resumeFromMessageId?: string;
+}
+
+/**
+ * Information needed to resume an export from an existing file
+ */
+export interface ResumeInfo {
+  /** The oldest message ID in the existing export - we'll fetch messages BEFORE this */
+  lastMessageId: string;
+  /** Number of messages already exported */
+  existingMessageCount: number;
+  /** The channel ID from the existing export */
+  channelId: string;
+  /** For formats that need it (JSON), the existing messages to prepend */
+  existingMessages?: unknown[];
 }
 
 /**
@@ -75,6 +91,11 @@ export interface ExportMetadata {
  *
  * For streaming exporters, write() persists data immediately.
  * For buffered exporters, write() accumulates data and close() does the final write.
+ *
+ * For resuming exports:
+ * 1. parseResumeInfo() - Read existing file and extract resume information
+ * 2. openForResume() - Initialize for appending to existing export
+ * 3. write() / close() - Same as normal export
  */
 export interface Exporter {
   /**
@@ -83,6 +104,21 @@ export interface Exporter {
    * @param options - Exporter configuration options
    */
   open(outputPath: string, options: ExporterOptions): Promise<void>;
+
+  /**
+   * Initialize the exporter for resuming an existing export
+   * @param outputPath - Path to the existing export file
+   * @param resumeInfo - Information about the existing export state
+   * @param options - Exporter configuration options
+   */
+  openForResume(outputPath: string, resumeInfo: ResumeInfo, options: ExporterOptions): Promise<void>;
+
+  /**
+   * Parse an existing export file to extract resume information
+   * @param filePath - Path to the existing export file
+   * @returns Resume information, or throws if the file is invalid/unparseable
+   */
+  parseResumeInfo(filePath: string): Promise<ResumeInfo>;
 
   /**
    * Write a batch of messages to the export

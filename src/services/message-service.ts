@@ -23,7 +23,8 @@ export class MessageService {
     const limit = config.limit;
 
     let hasMore = true;
-    let cursor: Snowflake | undefined;
+    // If resuming, start with the provided message ID as cursor
+    let cursor: Snowflake | undefined = config.resumeFromMessageId as Snowflake | undefined;
     let totalCount = 0;
     const startTime = Date.now();
 

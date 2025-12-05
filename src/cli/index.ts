@@ -1,5 +1,5 @@
 import { run } from "@optique/core/facade";
-import { cliParser, type CliArgs } from "./commands.js";
+import { cliParser } from "./commands.js";
 import { DiscordApiClient } from "../api/discord-client.js";
 import { TokenBucketRateLimiter } from "../api/rate-limiter.js";
 import { MessageService } from "../services/message-service.js";
@@ -112,10 +112,30 @@ async function handleExport(
     format?: string;
     batchSize?: number;
     verbose?: boolean;
+    continueFrom?: string;
   },
   { exportOrchestrator }: ReturnType<typeof initializeServices>
 ): Promise<void> {
   try {
+    const format = args.format || "json";
+
+    // If --continue is specified, resume from existing export
+    if (args.continueFrom) {
+      // When resuming, the continue file is both input and output
+      const result = await exportOrchestrator.continueExport(
+        args.continueFrom,
+        format,
+        args.channel,
+        (progress) => {
+          process.stdout.write(`\rFetched ${progress.messageCount} messages (${progress.rate.toFixed(1)}/s)`);
+        }
+      );
+
+      console.log(`\nExport resumed: ${result.messageCount} total messages in ${result.file}`);
+      return;
+    }
+
+    // Normal export
     const config = exportOrchestrator.createExportConfig({
       channel: args.channel,
       output: args.output,

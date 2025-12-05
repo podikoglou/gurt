@@ -1,13 +1,13 @@
-import { integer, string } from "@optique/core";
+import { choice, integer, string } from "@optique/core";
 import {
   argument,
   command,
   constant,
   object,
   option,
+  optional,
   or,
   withDefault,
-  flag,
   type InferValue,
 } from "@optique/core/parser";
 import { path } from "@optique/run";
@@ -61,13 +61,14 @@ export const exportCommand = command(
       "messages.json"
     ),
     format: withDefault(
-      option("-f", "--format", string({ metavar: "FORMAT" })),
+      option("-f", "--format", choice(["json", "jsonl", "csv"], { metavar: "FORMAT" })),
       "json"
     ),
     batchSize: withDefault(
       option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: 100 })),
       100
     ),
+    continueFrom: optional(option("-c", "--continue", path({ metavar: "FILE", mustExist: true, type: "file" }))),
     verbose: option("-v", "--verbose"),
     tokenType: withDefault(
       option("-t", "--token-type", string({ metavar: "TYPE" })),
