@@ -94,12 +94,17 @@ export function extractRoute(endpoint: string): string {
     return "channels:messages";
   }
 
+  // Check for guilds:channels before channels to properly categorize guild channel endpoints
+  if (endpoint.includes("guilds") && endpoint.includes("channels")) {
+    return "guilds:channels";
+  }
+
   if (endpoint.includes("channels")) {
     return "channels";
   }
 
   if (endpoint.includes("guilds")) {
-    return endpoint.includes("channels") ? "guilds:channels" : "guilds";
+    return "guilds";
   }
 
   if (endpoint.includes("users")) {
