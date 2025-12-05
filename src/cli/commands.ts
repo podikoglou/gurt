@@ -11,6 +11,7 @@ import {
   type InferValue,
 } from "@optique/core/parser";
 import { path } from "@optique/run";
+import { DISCORD_API } from "../utils/constants.js";
 
 // Query subcommands (nested under "query")
 
@@ -62,8 +63,8 @@ export const exportCommand = command(
       "json"
     ),
     batchSize: withDefault(
-      option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: 100 })),
-      100
+      option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: DISCORD_API.MAX_MESSAGES_PER_REQUEST })),
+      DISCORD_API.DEFAULT_BATCH_SIZE
     ),
     continue: option("-c", "--continue"),
     verbose: option("-v", "--verbose"),
