@@ -112,7 +112,7 @@ async function handleExport(
     format?: string;
     batchSize?: number;
     verbose?: boolean;
-    continueFrom?: string;
+    continue?: boolean;
   },
   { exportOrchestrator }: ReturnType<typeof initializeServices>
 ): Promise<void> {
@@ -120,11 +120,10 @@ async function handleExport(
     const format = args.format || "json";
     const output = args.output ?? `${args.channel}.${format}`;
 
-    // If --continue is specified, resume from existing export
-    if (args.continueFrom) {
-      // When resuming, the continue file is both input and output
+    // If --continue is specified, resume from the output file
+    if (args.continue) {
       const result = await exportOrchestrator.continueExport(
-        args.continueFrom,
+        output,
         format,
         args.channel,
         (progress) => {

@@ -65,7 +65,7 @@ export const exportCommand = command(
       option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: 100 })),
       100
     ),
-    continueFrom: optional(option("-c", "--continue", path({ metavar: "FILE", mustExist: true, type: "file" }))),
+    continue: option("-c", "--continue"),
     verbose: option("-v", "--verbose"),
     tokenType: withDefault(
       option("-t", "--token-type", string({ metavar: "TYPE" })),
