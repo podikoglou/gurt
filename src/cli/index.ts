@@ -108,7 +108,7 @@ async function handleQueryChannels(
 async function handleExport(
   args: {
     channel: string;
-    output: string;
+    output?: string;
     format?: string;
     batchSize?: number;
     verbose?: boolean;
@@ -118,6 +118,7 @@ async function handleExport(
 ): Promise<void> {
   try {
     const format = args.format || "json";
+    const output = args.output ?? `${args.channel}.${format}`;
 
     // If --continue is specified, resume from existing export
     if (args.continueFrom) {
@@ -138,7 +139,7 @@ async function handleExport(
     // Normal export
     const config = exportOrchestrator.createExportConfig({
       channel: args.channel,
-      output: args.output,
+      output: output,
       format: args.format,
       batchSize: args.batchSize,
     });

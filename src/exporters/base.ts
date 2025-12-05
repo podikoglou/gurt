@@ -18,7 +18,7 @@ export abstract class BaseExporter implements Exporter {
   protected startTime: number = 0;
 
   async open(outputPath: string, options: ExporterOptions): Promise<void> {
-    this.outputPath = this.normalizeOutputPath(outputPath);
+    this.outputPath = outputPath;
     this.streaming = options.streaming;
     this.messages = [];
     this.startTime = Date.now();
@@ -31,7 +31,7 @@ export abstract class BaseExporter implements Exporter {
     resumeInfo: ResumeInfo,
     options: ExporterOptions
   ): Promise<void> {
-    this.outputPath = this.normalizeOutputPath(outputPath);
+    this.outputPath = outputPath;
     this.streaming = options.streaming;
     this.startTime = Date.now();
 
@@ -99,14 +99,6 @@ export abstract class BaseExporter implements Exporter {
    * Must be implemented by subclasses.
    */
   protected abstract persist(): Promise<void>;
-
-  /**
-   * Normalize the output path to include the correct extension.
-   */
-  protected normalizeOutputPath(outputPath: string): string {
-    const ext = `.${this.getExtension()}`;
-    return outputPath.toLowerCase().endsWith(ext) ? outputPath : `${outputPath}${ext}`;
-  }
 
   /**
    * Calculate the size of the output file in bytes.

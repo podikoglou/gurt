@@ -56,10 +56,7 @@ export const exportCommand = command(
   object({
     command: constant("export"),
     channel: argument(string({ metavar: "CHANNEL_ID" })),
-    output: withDefault(
-      argument(path({ metavar: "OUTPUT", mustExist: false, type: "file" })),
-      "messages.json"
-    ),
+    output: optional(option("-o", "--output", path({ metavar: "OUTPUT", mustExist: false, type: "file" }))),
     format: withDefault(
       option("-f", "--format", choice(["json", "jsonl", "csv"], { metavar: "FORMAT" })),
       "json"
