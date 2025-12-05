@@ -113,31 +113,31 @@ export class TokenBucketRateLimiter implements RateLimiter {
 export function extractRoute(endpoint: string): string {
   // Discord rate limits are based on major endpoints
   // Examples:
-  // GET /channels/123/messages -> channels:messages
-  // GET /guilds/456 -> guilds
-  // POST /channels/789/messages -> channels:messages
+  // GET channels/123/messages -> channels:messages
+  // GET guilds/456 -> guilds
+  // POST channels/789/messages -> channels:messages
 
-  if (endpoint.includes("/messages")) {
+  if (endpoint.includes("messages")) {
     return "channels:messages";
   }
 
-  if (endpoint.includes("/channels")) {
+  if (endpoint.includes("channels")) {
     return "channels";
   }
 
-  if (endpoint.includes("/guilds")) {
-    return endpoint.includes("/channels") ? "guilds:channels" : "guilds";
+  if (endpoint.includes("guilds")) {
+    return endpoint.includes("channels") ? "guilds:channels" : "guilds";
   }
 
-  if (endpoint.includes("/users")) {
+  if (endpoint.includes("users")) {
     return "users";
   }
 
-  if (endpoint.includes("/webhooks")) {
+  if (endpoint.includes("webhooks")) {
     return "webhooks";
   }
 
   // Default to the first path segment
-  const match = endpoint.match(/\/(\w+)/);
+  const match = endpoint.match(/(\w+)/);
   return match ? (match[1] ?? "default") : "default";
 }

@@ -217,35 +217,35 @@ export class DiscordApiClient implements ApiClient {
     if (options.after) params.after = options.after;
     if (options.around) params.around = options.around;
 
-    return this.get<Message[]>(`/channels/${channelId}/messages`, params);
+    return this.get<Message[]>(`channels/${channelId}/messages`, params);
   }
 
   async getMessage(channelId: Snowflake, messageId: Snowflake): Promise<Message> {
-    return this.get<Message>(`/channels/${channelId}/messages/${messageId}`);
+    return this.get<Message>(`channels/${channelId}/messages/${messageId}`);
   }
 
   async getDmChannels(): Promise<Channel[]> {
-    return this.get<Channel[]>("/users/@me/channels");
+    return this.get<Channel[]>("users/@me/channels");
   }
 
   async getGuilds(): Promise<Guild[]> {
-    return this.get<Guild[]>("/users/@me/guilds");
+    return this.get<Guild[]>("users/@me/guilds");
   }
 
   async getGuildChannels(guildId: Snowflake): Promise<Channel[]> {
-    return this.get<Channel[]>(`/guilds/${guildId}/channels`);
+    return this.get<Channel[]>(`guilds/${guildId}/channels`);
   }
 
   async getChannel(channelId: Snowflake): Promise<Channel> {
-    return this.get<Channel>(`/channels/${channelId}`);
+    return this.get<Channel>(`channels/${channelId}`);
   }
 
   async getUser(userId: Snowflake): Promise<User> {
-    return this.get<User>(`/users/${userId}`);
+    return this.get<User>(`users/${userId}`);
   }
 
   async getCurrentUser(): Promise<User> {
-    return this.get<User>("/users/@me");
+    return this.get<User>("users/@me");
   }
 
   // Private helper methods
