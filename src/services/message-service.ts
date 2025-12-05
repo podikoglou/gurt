@@ -1,6 +1,7 @@
 import type { DiscordApiClient } from "../api/discord-client.js";
 import type { Message, Snowflake } from "../types/discord.js";
 import type { ExportConfig, ExportProgress } from "../types/export.js";
+import { DISCORD_API } from "../utils/constants.js";
 
 /**
  * Service for fetching Discord messages with pagination
@@ -18,7 +19,7 @@ export class MessageService {
     config: Partial<ExportConfig> = {},
     onProgress?: (progress: ExportProgress) => void
   ): AsyncGenerator<unknown[], void, unknown> {
-    const batchSize = Math.min(config.batchSize || 100, 100);
+    const batchSize = Math.min(config.batchSize || DISCORD_API.DEFAULT_BATCH_SIZE, DISCORD_API.MAX_MESSAGES_PER_REQUEST);
     const sortBy = config.sortBy || "oldest";
     const limit = config.limit;
 

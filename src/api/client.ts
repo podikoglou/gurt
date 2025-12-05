@@ -1,4 +1,5 @@
 import type { RateLimitInfo } from "../types/discord.js";
+import { RETRY } from "../utils/constants.js";
 
 /**
  * Generic HTTP API client interface for Discord API operations
@@ -35,14 +36,13 @@ export interface RetryConfig {
  * Default retry configuration for Discord API
  * - Exponential backoff with 2x multiplier
  * - Retries on rate limits (429) and server errors (5xx)
- * - Handles common network errors
  */
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
-  maxRetries: 3,
-  baseDelay: 1000,
-  maxDelay: 10000,
-  backoffMultiplier: 2,
-  retryableStatusCodes: [429, 500, 502, 503, 504],
+  maxRetries: RETRY.MAX_RETRIES,
+  baseDelay: RETRY.BASE_DELAY_MS,
+  maxDelay: RETRY.MAX_DELAY_MS,
+  backoffMultiplier: RETRY.BACKOFF_MULTIPLIER,
+  retryableStatusCodes: [...RETRY.RETRYABLE_STATUS_CODES],
 };
 export class ApiError extends Error {
   constructor(

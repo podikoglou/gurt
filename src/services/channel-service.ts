@@ -1,5 +1,6 @@
 import type { DiscordApiClient } from "../api/discord-client.js";
 import type { Channel, Guild, Snowflake } from "../types/discord.js";
+import { CHANNEL_TYPES, CHANNEL_TYPE_DISPLAY } from "../utils/constants.js";
 
 /**
  * Service for managing Discord channel operations
@@ -14,12 +15,12 @@ export class ChannelService {
 
   async getDmChannels(): Promise<Channel[]> {
     const channels = await this.apiClient.getDmChannels();
-    return (channels as any[]).map(this.formatChannel).filter(c => c.type === 1);
+    return (channels as any[]).map(this.formatChannel).filter(c => c.type === CHANNEL_TYPES.DM);
   }
 
   async getGroupDmChannels(): Promise<Channel[]> {
     const channels = await this.apiClient.getDmChannels();
-    return (channels as any[]).map(this.formatChannel).filter(c => c.type === 3);
+    return (channels as any[]).map(this.formatChannel).filter(c => c.type === CHANNEL_TYPES.GROUP_DM);
   }
 
   async getGuilds(): Promise<Guild[]> {
@@ -37,7 +38,7 @@ export class ChannelService {
 
   async getGuildTextChannels(guildId: Snowflake): Promise<Channel[]> {
     const channels = await this.getGuildChannels(guildId);
-    return channels.filter(c => c.type === 0 || c.type === 5);
+    return channels.filter(c => c.type === CHANNEL_TYPES.GUILD_TEXT || c.type === CHANNEL_TYPES.GUILD_ANNOUNCEMENT);
   }
 
   async getChannel(channelId: Snowflake): Promise<Channel> {
@@ -58,9 +59,9 @@ export class ChannelService {
   };
 
   formatChannelName(channel: Channel): string {
-    if (channel.type === 1) {
+    if (channel.type === CHANNEL_TYPES.DM) {
       return "Direct Message";
-    } else if (channel.type === 3) {
+    } else if (channel.type === CHANNEL_TYPES.GROUP_DM) {
       return channel.name || "Group DM";
     } else {
       return channel.name || "Unknown Channel";
@@ -68,26 +69,10 @@ export class ChannelService {
   }
 
   /**
-   * Discord channel types:
-   * 0: Text, 1: DM, 2: Voice, 3: Group DM, 4: Category, 5: Announcement
-   * 10-12: Threads, 13: Stage, 14: Directory, 15: Forum
+   * Get a human-readable display name for a channel type
+   * @see CHANNEL_TYPES for the numeric type values
    */
   getChannelTypeDisplay(channel: Channel): string {
-    const typeNames = {
-      0: "📝 Text",
-      1: "💬 DM",
-      2: "🔊 Voice",
-      3: "👥 Group DM",
-      4: "📁 Category",
-      5: "📢 Announcement",
-      10: "🧵 Announcement Thread",
-      11: "🧵 Public Thread",
-      12: "🔒 Private Thread",
-      13: "🎤 Stage",
-      14: "📋 Directory",
-      15: "💬 Forum",
-    };
-
-    return typeNames[channel.type as keyof typeof typeNames] || "❓ Unknown";
+    return CHANNEL_TYPE_DISPLAY[channel.type] || "❓ Unknown";
   }
 }

@@ -1,6 +1,7 @@
 import type { RateLimiter } from "./client";
 import type { RateLimitInfo } from "../types/discord";
 import { delay } from "../utils/delay.js";
+import { RATE_LIMIT } from "../utils/constants.js";
 
 /**
  * Tracks rate limit state for a specific Discord API route
@@ -67,7 +68,7 @@ export class TokenBucketRateLimiter implements RateLimiter {
 
     this.buckets.set(route, bucket);
 
-    if (info.remaining < 5) {
+    if (info.remaining < RATE_LIMIT.LOW_REMAINING_WARNING_THRESHOLD) {
       console.warn(`Rate limit for ${route}: ${info.remaining}/${info.limit} remaining`);
     }
   }

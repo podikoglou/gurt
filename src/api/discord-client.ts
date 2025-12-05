@@ -5,6 +5,7 @@ import type {
   RetryConfig,
 } from "./client";
 import { delay } from "../utils/delay.js";
+import { DISCORD_API } from "../utils/constants.js";
 import {
   ApiError,
   RateLimitError,
@@ -56,8 +57,8 @@ export class DiscordApiClient implements ApiClient {
     }
 
     this.client = ky.create({
-      prefixUrl: "https://discord.com/api/v10",
-      timeout: 30000,
+      prefixUrl: DISCORD_API.BASE_URL,
+      timeout: DISCORD_API.REQUEST_TIMEOUT_MS,
       hooks: {
         beforeRequest: [
           (request) => {
