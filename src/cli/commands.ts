@@ -1,4 +1,5 @@
 import { choice, integer, string } from "@optique/core";
+import { RETRY } from "../utils/constants.js";
 import {
   argument,
   command,
@@ -65,6 +66,10 @@ export const exportCommand = command(
     batchSize: withDefault(
       option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: DISCORD_API.MAX_MESSAGES_PER_REQUEST })),
       DISCORD_API.DEFAULT_BATCH_SIZE
+    ),
+    maxRetries: withDefault(
+      option("-r", "--max-retries", integer({ metavar: "RETRIES", min: 0, max: 10 })),
+      RETRY.MAX_RETRIES
     ),
     continue: option("-c", "--continue"),
     verbose: option("-v", "--verbose"),

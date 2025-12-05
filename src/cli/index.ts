@@ -17,10 +17,11 @@ function validateEnvironment(): void {
   }
 }
 
-function initializeServices(verbose = false, tokenType: "bot" | "user" = "user") {
+function initializeServices(verbose = false, tokenType: "bot" | "user" = "user", maxRetries?: number) {
   const token = process.env.DISCORD_TOKEN!;
   const rateLimiter = new TokenBucketRateLimiter();
-  const apiClient = new DiscordApiClient(token, rateLimiter, {}, verbose, tokenType);
+  const retryConfig = maxRetries !== undefined ? { maxRetries } : {};
+  const apiClient = new DiscordApiClient(token, rateLimiter, retryConfig, verbose, tokenType);
   const messageService = new MessageService(apiClient);
   const channelService = new ChannelService(apiClient);
 
@@ -111,6 +112,7 @@ async function handleExport(
     output?: string;
     format?: string;
     batchSize?: number;
+    maxRetries?: number;
     verbose?: boolean;
     continue?: boolean;
   },
@@ -164,7 +166,8 @@ async function main(): Promise<void> {
 
     const verbose = !!result.verbose;
     const tokenType = (result.tokenType as "bot" | "user") || "user";
-    const services = initializeServices(verbose, tokenType);
+    const maxRetries = result.command === "export" ? result.maxRetries : undefined;
+    const services = initializeServices(verbose, tokenType, maxRetries);
 
     if (result.command === "query") {
       switch (result.subcommand.queryType) {
