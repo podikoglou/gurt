@@ -1,0 +1,19 @@
+[build]
+# Default build target
+target = "node"
+
+# Entry points
+entry = "./src/index.ts"
+
+# Output directory
+outdir = "./dist"
+
+# Minify code
+minify = true
+
+# Generate source maps
+sourcemap = true
+
+# For CLI builds with shebang
+[build.shebang]
+# This will add #!/usr/bin/env node to the output

@@ -1,4 +1,4 @@
-# gurt
+# gurt-export
 
 Little Discord chat exporter written in TypeScript. Can export in to:
 

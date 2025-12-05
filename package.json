@@ -1,8 +1,36 @@
 {
-  "name": "gurt",
-  "module": "index.ts",
+  "name": "gurt-export",
+  "version": "1.0.0",
+  "description": "A Discord Chat Exporter library and CLI written in TypeScript",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "type": "module",
-  "private": true,
+  "bin": {
+    "gurt-export": "dist/cli.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun --minify --sourcemap",
+    "build:node": "bun build ./src/index.ts --outdir ./dist --target node --minify --sourcemap",
+    "build:cli": "./scripts/build-cli.sh",
+    "dev": "bun run src/index.ts",
+    "prepublishOnly": "bun run build && bun run build:cli",
+    "test:cli": "node ./dist/cli.js --help"
+  },
+  "keywords": [
+    "discord",
+    "chat",
+    "export",
+    "cli",
+    "typescript",
+    "bun"
+  ],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
   },
