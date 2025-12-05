@@ -47,16 +47,17 @@ export class DiscordApiClient implements ApiClient {
       ...retryConfig,
     };
 
-    // Determine token type based on prefix
+    // Keep the original token intact, just detect type for logging
     if (token.startsWith("Bot ")) {
       this.tokenType = "Bot";
-      this.token = token.slice(4); // Remove "Bot " prefix
+      this.token = token; // Keep "Bot " prefix intact
     } else if (token.startsWith("Bearer ")) {
       this.tokenType = "Bearer";
-      this.token = token.slice(7); // Remove "Bearer " prefix
+      this.token = token; // Keep "Bearer " prefix intact
     } else {
-      // Default to Bot token for simplicity
+      // Default to Bot token - add prefix if not present
       this.tokenType = "Bot";
+      this.token = `Bot ${token}`; // Add "Bot " prefix
     }
 
     // Configure ky client
@@ -67,14 +68,14 @@ export class DiscordApiClient implements ApiClient {
         beforeRequest: [
           (request) => {
             // Add authorization header
-            const authHeader = `${this.tokenType} ${this.token}`;
-            request.headers.set("Authorization", authHeader);
+            request.headers.set("Authorization", this.token);
             request.headers.set("User-Agent", "Gurt (https://github.com/apodikoglou/gurt, 1.0.0)");
 
             // Debug logging
             if (this.verbose || process.env.NODE_ENV === "development" || process.env.DEBUG) {
+              const tokenPreview = this.token.substring(0, Math.min(this.token.length, 20));
               console.error(`[DEBUG] Request: ${request.method} ${request.url}`);
-              console.error(`[DEBUG] Auth header: ${this.tokenType} [${this.token.length} chars]`);
+              console.error(`[DEBUG] Token starts with: ${tokenPreview}... (type: ${this.tokenType})`);
             }
           },
         ],
