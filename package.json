@@ -14,10 +14,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "./scripts/build-cli.sh",
+    "build": "bun build ./src/index.ts --outfile ./dist/cli.js --target node --minify",
     "dev": "bun run src/index.ts",
-    "prepublishOnly": "bun run build",
-    "test:cli": "node ./dist/cli.js --help"
+    "prepublishOnly": "bun run build"
   },
   "keywords": [
     "discord",
