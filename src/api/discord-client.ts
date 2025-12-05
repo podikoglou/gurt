@@ -63,7 +63,6 @@ export class DiscordApiClient implements ApiClient {
         beforeRequest: [
           (request) => {
             request.headers.set("Authorization", this.token);
-            request.headers.set("User-Agent", "Gurt (https://github.com/apodikoglou/gurt, 1.0.0)");
 
             if (this.verbose || process.env.NODE_ENV === "development" || process.env.DEBUG) {
               console.error(`[DEBUG] Request: ${request.method} ${request.url}`);
