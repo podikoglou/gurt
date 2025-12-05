@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@optique/core": "^0.7.2",
-    "@optique/run": "^0.7.2"
+    "@optique/run": "^0.7.2",
+    "ky": "^1.14.0"
   }
 }
