@@ -28,7 +28,6 @@ import { extractRoute } from "./rate-limiter";
 export class DiscordApiClient implements ApiClient {
   private readonly client: typeof ky;
   private readonly token: string;
-  private readonly tokenType: "Bot" | "Bearer";
   private readonly rateLimiter: RateLimiter;
   private readonly retryConfig: RetryConfig;
   private verbose = false;
@@ -37,27 +36,23 @@ export class DiscordApiClient implements ApiClient {
     token: string,
     rateLimiter: RateLimiter,
     retryConfig: Partial<RetryConfig> = {},
-    verbose = false
+    verbose = false,
+    tokenType: "bot" | "user" = "user"
   ) {
     this.verbose = verbose;
-    this.token = token;
     this.rateLimiter = rateLimiter;
     this.retryConfig = {
       ...DEFAULT_RETRY_CONFIG,
       ...retryConfig,
     };
 
-    // Keep the original token intact, just detect type for logging
-    if (token.startsWith("Bot ")) {
-      this.tokenType = "Bot";
-      this.token = token; // Keep "Bot " prefix intact
-    } else if (token.startsWith("Bearer ")) {
-      this.tokenType = "Bearer";
-      this.token = token; // Keep "Bearer " prefix intact
+    // Format token based on type
+    if (token.startsWith("Bot ") || token.startsWith("Bearer ")) {
+      // Token already has prefix, use as-is
+      this.token = token;
     } else {
-      // Default to Bot token - add prefix if not present
-      this.tokenType = "Bot";
-      this.token = `Bot ${token}`; // Add "Bot " prefix
+      // Add appropriate prefix
+      this.token = tokenType === "bot" ? `Bot ${token}` : token;
     }
 
     // Configure ky client
@@ -73,9 +68,7 @@ export class DiscordApiClient implements ApiClient {
 
             // Debug logging
             if (this.verbose || process.env.NODE_ENV === "development" || process.env.DEBUG) {
-              const tokenPreview = this.token.substring(0, Math.min(this.token.length, 20));
               console.error(`[DEBUG] Request: ${request.method} ${request.url}`);
-              console.error(`[DEBUG] Token starts with: ${tokenPreview}... (type: ${this.tokenType})`);
             }
           },
         ],
@@ -158,8 +151,9 @@ export class DiscordApiClient implements ApiClient {
             if (this.verbose) {
               console.error(`\n[VERBOSE] Authentication failed. Please check:\n` +
                            `1. Your DISCORD_TOKEN is correct\n` +
-                           `2. The token has the right permissions\n` +
-                           `3. The token hasn't expired\n`);
+                           `2. You're using the correct token type (--token-type bot or user)\n` +
+                           `3. The token has the right permissions\n` +
+                           `4. The token hasn't expired\n`);
             }
             throw new AuthenticationError(authMsg, data);
           case 403:

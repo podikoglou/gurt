@@ -43,6 +43,10 @@ export const queryCommand = command(
     command: constant("query"),
     subcommand: or(queryDmsCommand, queryGuildsCommand, queryChannelsCommand),
     verbose: option("-v", "--verbose"),
+    tokenType: withDefault(
+      option("-t", "--token-type", string({ metavar: "TYPE" })),
+      "user"
+    ),
   })
 );
 
@@ -65,6 +69,10 @@ export const exportCommand = command(
       100
     ),
     verbose: option("-v", "--verbose"),
+    tokenType: withDefault(
+      option("-t", "--token-type", string({ metavar: "TYPE" })),
+      "user"
+    ),
   })
 );
 

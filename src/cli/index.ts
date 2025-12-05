@@ -19,10 +19,10 @@ function validateEnvironment(): void {
 }
 
 // Initialize services
-function initializeServices(verbose = false) {
+function initializeServices(verbose = false, tokenType: "bot" | "user" = "user") {
   const token = process.env.DISCORD_TOKEN!;
   const rateLimiter = new TokenBucketRateLimiter();
-  const apiClient = new DiscordApiClient(token, rateLimiter, {}, verbose);
+  const apiClient = new DiscordApiClient(token, rateLimiter, {}, verbose, tokenType);
   const messageService = new MessageService(apiClient);
   const channelService = new ChannelService(apiClient);
 
@@ -236,9 +236,10 @@ async function main(): Promise<void> {
     // If parsing succeeded, validate environment and initialize services
     validateEnvironment();
 
-    // Determine verbose mode
+    // Extract options from result
     const verbose = !!result.verbose;
-    const services = initializeServices(verbose);
+    const tokenType = (result.tokenType as "bot" | "user") || "user";
+    const services = initializeServices(verbose, tokenType);
 
     // Route to appropriate handler based on command and subcommand
     if (result.command === "query") {
