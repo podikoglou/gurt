@@ -37,8 +37,6 @@ export class ExportOrchestrator {
         throw new Error(`Channel ${config.channelId} not found or inaccessible`);
       }
 
-      console.log(`Starting export of channel: ${this.channelService.formatChannelName(channel)}`);
-
       const allMessages: unknown[] = [];
 
       for await (const batch of this.messageService.fetchMessagesPaginated(
@@ -53,11 +51,7 @@ export class ExportOrchestrator {
         allMessages.push(...batch);
       }
 
-      console.log(`Collected ${allMessages.length} messages`);
-
       const result = await exporter.export(allMessages, config.outputPath);
-
-      console.log(`Export completed: ${result.file} (${this.formatFileSize(result.size)})`);
 
       return {
         ...result,

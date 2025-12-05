@@ -140,11 +140,7 @@ export class DiscordApiClient implements ApiClient {
           case 401:
             const authMsg = data.message || "Authentication failed";
             if (this.verbose) {
-              console.error(`\n[VERBOSE] Authentication failed. Please check:\n` +
-                           `1. Your DISCORD_TOKEN is correct\n` +
-                           `2. You're using the correct token type (--token-type bot or user)\n` +
-                           `3. The token has the right permissions\n` +
-                           `4. The token hasn't expired\n`);
+              console.error(`Authentication failed. Check DISCORD_TOKEN and token type.`);
             }
             throw new AuthenticationError(authMsg, data);
           case 403:
