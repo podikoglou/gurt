@@ -14,11 +14,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun --minify --sourcemap",
-    "build:node": "bun build ./src/index.ts --outdir ./dist --target node --minify --sourcemap",
-    "build:cli": "./scripts/build-cli.sh",
+    "build": "./scripts/build-cli.sh",
     "dev": "bun run src/index.ts",
-    "prepublishOnly": "bun run build && bun run build:cli",
+    "prepublishOnly": "bun run build",
     "test:cli": "node ./dist/cli.js --help"
   },
   "keywords": [
