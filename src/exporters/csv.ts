@@ -166,30 +166,29 @@ export class CsvExporter extends BaseExporter {
     }
 
     const text = await file.text();
-    const lines = text.trim().split("\n").filter((line) => line.length > 0);
+    const rows = this.parseCSVFile(text);
 
-    if (lines.length === 0) {
+    if (rows.length === 0) {
       throw new Error("Export file is empty");
     }
 
-    // First line should be the header
-    const header = lines[0]!;
-    const columns = this.parseCSVRow(header);
+    // First row should be the header
+    const columns = rows[0]!;
 
     const idIndex = columns.indexOf("id");
     if (idIndex === -1) {
       throw new Error("Invalid CSV export: missing 'id' column in header");
     }
 
-    const dataLines = lines.slice(1);
+    const dataRows = rows.slice(1);
 
-    if (dataLines.length === 0) {
+    if (dataRows.length === 0) {
       throw new Error("Export file contains no messages to resume from");
     }
 
     // Parse the last row to get the oldest message ID
     // (messages are in reverse chronological order - newest first)
-    const lastRow = this.parseCSVRow(dataLines[dataLines.length - 1]!);
+    const lastRow = dataRows[dataRows.length - 1]!;
     const lastMessageId = lastRow[idIndex];
 
     if (!lastMessageId) {
@@ -202,7 +201,7 @@ export class CsvExporter extends BaseExporter {
       throw new Error("Invalid CSV export: missing 'channel_id' column in header");
     }
 
-    const firstRow = this.parseCSVRow(dataLines[0]!);
+    const firstRow = dataRows[0]!;
     const channelId = firstRow[channelIdIndex];
 
     if (!channelId) {
@@ -211,10 +210,70 @@ export class CsvExporter extends BaseExporter {
 
     return {
       lastMessageId,
-      existingMessageCount: dataLines.length,
+      existingMessageCount: dataRows.length,
       channelId,
       // CSV doesn't need to load all messages - we'll append to the file
     };
+  }
+
+  /**
+   * Parse an entire CSV file, properly handling quoted fields with newlines
+   */
+  private parseCSVFile(text: string): string[][] {
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentValue = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (inQuotes) {
+        if (char === '"' && nextChar === '"') {
+          // Escaped quote
+          currentValue += '"';
+          i++; // Skip the next quote
+        } else if (char === '"') {
+          // End of quoted value
+          inQuotes = false;
+        } else {
+          currentValue += char;
+        }
+      } else {
+        if (char === '"') {
+          // Start of quoted value
+          inQuotes = true;
+        } else if (char === ",") {
+          // End of value
+          currentRow.push(currentValue);
+          currentValue = "";
+        } else if (char === "\n" || (char === "\r" && nextChar === "\n")) {
+          // End of row
+          if (char === "\r") {
+            i++; // Skip the \n in \r\n
+          }
+          currentRow.push(currentValue);
+          if (currentRow.some((v) => v.length > 0)) {
+            rows.push(currentRow);
+          }
+          currentRow = [];
+          currentValue = "";
+        } else if (char !== "\r") {
+          currentValue += char;
+        }
+      }
+    }
+
+    // Don't forget the last value/row
+    if (currentValue.length > 0 || currentRow.length > 0) {
+      currentRow.push(currentValue);
+      if (currentRow.some((v) => v.length > 0)) {
+        rows.push(currentRow);
+      }
+    }
+
+    return rows;
   }
 
   /**
