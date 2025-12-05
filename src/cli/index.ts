@@ -5,7 +5,7 @@ import { TokenBucketRateLimiter } from "../api/rate-limiter.js";
 import { MessageService } from "../services/message-service.js";
 import { ChannelService } from "../services/channel-service.js";
 import { ExportOrchestrator } from "../core/export-orchestrator.js";
-import { JsonExporter, JsonlExporter } from "../exporters/index.js";
+import { CsvExporter, JsonExporter, JsonlExporter } from "../exporters/index.js";
 import type { ExporterFactory } from "../types/export.js";
 
 function validateEnvironment(): void {
@@ -25,6 +25,7 @@ function initializeServices(verbose = false, tokenType: "bot" | "user" = "user")
   const channelService = new ChannelService(apiClient);
 
   const exporterFactories = new Map<string, ExporterFactory>();
+  exporterFactories.set("csv", () => new CsvExporter());
   exporterFactories.set("json", () => new JsonExporter());
   exporterFactories.set("jsonl", () => new JsonlExporter());
 
