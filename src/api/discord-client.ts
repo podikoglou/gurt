@@ -4,6 +4,7 @@ import type {
   RateLimiter,
   RetryConfig,
 } from "./client";
+import { delay } from "../utils/delay.js";
 import {
   ApiError,
   RateLimitError,
@@ -89,14 +90,14 @@ export class DiscordApiClient implements ApiClient {
         beforeRetry: [
           async ({ error, retryCount }) => {
             if (error instanceof RateLimitError && !error.global) {
-              await this.delay(error.retryAfter * 1000);
+              await delay(error.retryAfter * 1000);
             } else {
-              const delay = Math.min(
+              const backoffDelay = Math.min(
                 this.retryConfig.baseDelay *
                   Math.pow(this.retryConfig.backoffMultiplier, retryCount),
                 this.retryConfig.maxDelay
               );
-              await this.delay(delay);
+              await delay(backoffDelay);
             }
           },
         ],
@@ -255,7 +256,5 @@ export class DiscordApiClient implements ApiClient {
     }
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
+
 }

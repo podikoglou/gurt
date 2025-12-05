@@ -1,5 +1,6 @@
 import type { RateLimiter } from "./client";
 import type { RateLimitInfo } from "../types/discord";
+import { delay } from "../utils/delay.js";
 
 /**
  * Tracks rate limit state for a specific Discord API route
@@ -28,9 +29,9 @@ export class TokenBucketRateLimiter implements RateLimiter {
     const now = Date.now();
 
     if (this.globalResetAt > now) {
-      const delay = this.globalResetAt - now;
-      console.warn(`Global rate limit active, waiting ${delay}ms`);
-      await this.delay(delay);
+      const waitTime = this.globalResetAt - now;
+      console.warn(`Global rate limit active, waiting ${waitTime}ms`);
+      await delay(waitTime);
     }
 
     const bucket = this.buckets.get(route);
@@ -41,9 +42,9 @@ export class TokenBucketRateLimiter implements RateLimiter {
       }
 
       if (bucket.remaining <= 0) {
-        const delay = bucket.resetAt - now;
-        console.warn(`Route ${route} rate limit hit, waiting ${delay}ms`);
-        await this.delay(delay);
+        const waitTime = bucket.resetAt - now;
+        console.warn(`Route ${route} rate limit hit, waiting ${waitTime}ms`);
+        await delay(waitTime);
       }
     }
   }
@@ -101,9 +102,6 @@ export class TokenBucketRateLimiter implements RateLimiter {
     this.globalResetAt = 0;
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 }
 
 /**
