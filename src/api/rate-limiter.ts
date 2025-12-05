@@ -36,8 +36,9 @@ export class TokenBucketRateLimiter implements RateLimiter {
     const bucket = this.buckets.get(route);
     if (bucket) {
       if (bucket.resetAt <= now) {
+        // Bucket has expired, reset remaining tokens to full limit
+        // The resetAt will be updated on the next API response with fresh rate limit headers
         bucket.remaining = bucket.limit;
-        bucket.resetAt = now + bucket.resetAt - (bucket.resetAt - now);
       }
 
       if (bucket.remaining <= 0) {
