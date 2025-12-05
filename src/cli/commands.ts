@@ -54,7 +54,10 @@ export const queryCommand = command(
   object({
     command: constant("query"),
     subcommand: or(queryDmsCommand, queryGuildsCommand, queryChannelsCommand),
-    verbose: option("-v", "--verbose", { description: message`Enable verbose output` }),
+    verbose: withDefault(
+      option("-v", "--verbose", { description: message`Enable verbose output` }),
+      false
+    ),
     tokenType: withDefault(
       option("-t", "--token-type", string({ metavar: "TYPE" }), { description: message`Token type: "user" or "bot"` }),
       "user"
@@ -85,7 +88,10 @@ export const exportCommand = command(
       RETRY.MAX_RETRIES
     ),
     continue: option("-c", "--continue", { description: message`Resume a previous export` }),
-    verbose: option("-v", "--verbose", { description: message`Enable verbose output` }),
+    verbose: withDefault(
+      option("-v", "--verbose", { description: message`Enable verbose output` }),
+      false
+    ),
     tokenType: withDefault(
       option("-t", "--token-type", string({ metavar: "TYPE" }), { description: message`Token type: "user" or "bot"` }),
       "user"
