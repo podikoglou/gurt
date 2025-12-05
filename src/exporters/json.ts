@@ -1,5 +1,6 @@
 import { BaseExporter } from "./base.js";
 import type { ResumeInfo } from "../types/export.js";
+import { fileExists, readFile, writeFile } from "../utils/fs.js";
 
 /**
  * JSON exporter that saves raw Discord API responses
@@ -35,17 +36,15 @@ export class JsonExporter extends BaseExporter {
     };
 
     const jsonString = JSON.stringify(exportData, null, 2);
-    await Bun.write(this.outputPath, jsonString);
+    await writeFile(this.outputPath, jsonString);
   }
 
   async parseResumeInfo(filePath: string): Promise<ResumeInfo> {
-    const file = Bun.file(filePath);
-
-    if (!(await file.exists())) {
+    if (!(await fileExists(filePath))) {
       throw new Error(`Export file not found: ${filePath}`);
     }
 
-    const text = await file.text();
+    const text = await readFile(filePath);
 
     let data: { messages?: unknown[]; messageCount?: number };
     try {

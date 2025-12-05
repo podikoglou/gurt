@@ -1,5 +1,6 @@
 import { BaseExporter } from "./base.js";
 import type { ResumeInfo } from "../types/export.js";
+import { fileExists, readFile, writeFile } from "../utils/fs.js";
 
 /**
  * CSV exporter that saves messages in a tabular format
@@ -67,7 +68,7 @@ export class CsvExporter extends BaseExporter {
    */
   private async writeHeader(): Promise<void> {
     const header = CsvExporter.COLUMNS.join(",") + "\n";
-    await Bun.write(this.outputPath, header);
+    await writeFile(this.outputPath, header);
   }
 
   /**
@@ -81,11 +82,10 @@ export class CsvExporter extends BaseExporter {
     const newMessages = this.messages.slice(this.lastWrittenIndex);
     const rows = newMessages.map((msg) => this.messageToRow(msg)).join("\n");
 
-    const file = Bun.file(this.outputPath);
-    const existing = await file.text();
+    const existing = await readFile(this.outputPath);
     // Ensure we don't double up newlines when appending
     const separator = existing.endsWith("\n") ? "" : "\n";
-    await Bun.write(this.outputPath, existing + separator + rows + "\n");
+    await writeFile(this.outputPath, existing + separator + rows + "\n");
 
     this.lastWrittenIndex = this.messages.length;
   }
@@ -98,7 +98,7 @@ export class CsvExporter extends BaseExporter {
     const rows = this.messages.map((msg) => this.messageToRow(msg));
     const content = [header, ...rows].join("\n") + "\n";
 
-    await Bun.write(this.outputPath, content);
+    await writeFile(this.outputPath, content);
   }
 
   /**
@@ -159,13 +159,11 @@ export class CsvExporter extends BaseExporter {
   }
 
   async parseResumeInfo(filePath: string): Promise<ResumeInfo> {
-    const file = Bun.file(filePath);
-
-    if (!(await file.exists())) {
+    if (!(await fileExists(filePath))) {
       throw new Error(`Export file not found: ${filePath}`);
     }
 
-    const text = await file.text();
+    const text = await readFile(filePath);
     const rows = this.parseCSVFile(text);
 
     if (rows.length === 0) {

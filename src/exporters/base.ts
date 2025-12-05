@@ -4,6 +4,7 @@ import type {
   ExportResult,
   ResumeInfo,
 } from "../types/export.js";
+import { getFileSize } from "../utils/fs.js";
 
 /**
  * Abstract base class for exporters
@@ -104,11 +105,6 @@ export abstract class BaseExporter implements Exporter {
    * Calculate the size of the output file in bytes.
    */
   protected async calculateFileSize(): Promise<number> {
-    try {
-      const file = Bun.file(this.outputPath);
-      return file.size;
-    } catch {
-      return 0;
-    }
+    return getFileSize(this.outputPath);
   }
 }

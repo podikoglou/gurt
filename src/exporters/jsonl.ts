@@ -1,5 +1,6 @@
 import { BaseExporter } from "./base.js";
 import type { ResumeInfo } from "../types/export.js";
+import { fileExists, readFile, writeFile } from "../utils/fs.js";
 
 /**
  * JSONL (JSON Lines) exporter that saves messages one per line
@@ -53,7 +54,7 @@ export class JsonlExporter extends BaseExporter {
       version: 1,
     };
 
-    await Bun.write(this.outputPath, JSON.stringify(metadata) + "\n");
+    await writeFile(this.outputPath, JSON.stringify(metadata) + "\n");
   }
 
   /**
@@ -67,11 +68,10 @@ export class JsonlExporter extends BaseExporter {
     const newMessages = this.messages.slice(this.lastWrittenIndex);
     const lines = newMessages.map((msg) => JSON.stringify(msg)).join("\n");
 
-    const file = Bun.file(this.outputPath);
-    const existing = await file.text();
+    const existing = await readFile(this.outputPath);
     // Ensure we don't double up newlines when appending
     const separator = existing.endsWith("\n") ? "" : "\n";
-    await Bun.write(this.outputPath, existing + separator + lines + "\n");
+    await writeFile(this.outputPath, existing + separator + lines + "\n");
 
     this.lastWrittenIndex = this.messages.length;
   }
@@ -93,17 +93,15 @@ export class JsonlExporter extends BaseExporter {
       ...this.messages.map((msg) => JSON.stringify(msg)),
     ].join("\n");
 
-    await Bun.write(this.outputPath, lines + "\n");
+    await writeFile(this.outputPath, lines + "\n");
   }
 
   async parseResumeInfo(filePath: string): Promise<ResumeInfo> {
-    const file = Bun.file(filePath);
-
-    if (!(await file.exists())) {
+    if (!(await fileExists(filePath))) {
       throw new Error(`Export file not found: ${filePath}`);
     }
 
-    const text = await file.text();
+    const text = await readFile(filePath);
     const lines = text.trim().split("\n").filter((line) => line.length > 0);
 
     if (lines.length === 0) {
