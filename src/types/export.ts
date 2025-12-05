@@ -37,12 +37,10 @@ export interface ExportResult {
  * Real-time export progress information
  */
 export interface ExportProgress {
+  /** Total messages fetched so far */
   messageCount: number;
-  totalCount?: number;
-  percentage: number;
-  currentMessage?: any;
+  /** Messages per second */
   rate: number;
-  eta?: number;
 }
 
 /**

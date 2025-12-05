@@ -53,11 +53,7 @@ export class MessageService {
           if (onProgress) {
             onProgress({
               messageCount: totalCount,
-              totalCount: limit,
-              percentage: limit ? (totalCount / limit) * 100 : 0,
-              currentMessage: lastMessage,
               rate,
-              eta: rate > 0 && limit ? (limit - totalCount) / rate : undefined,
             });
           }
 

@@ -124,9 +124,7 @@ async function handleExport(
     });
 
     const result = await exportOrchestrator.exportChannel(config, (progress) => {
-      const bar = "=".repeat(Math.floor(progress.percentage / 2));
-      const empty = " ".repeat(50 - Math.floor(progress.percentage / 2));
-      process.stdout.write(`\r[${bar}${empty}] ${progress.percentage.toFixed(0)}%`);
+      process.stdout.write(`\rFetched ${progress.messageCount} messages (${progress.rate.toFixed(1)}/s)`);
     });
 
     console.log(`\nExported ${result.messageCount} messages to ${result.file}`);
