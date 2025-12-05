@@ -45,7 +45,7 @@ export class JsonExporter extends BaseMessageExporter {
     // Get channel info from first message
     const channelInfo = messages.length > 0
       ? {
-          id: messages[0].channelId,
+          id: messages[0]!.channelId,
           type: 0, // Would need channel service to get actual type
           name: null, // Would need channel service to get actual name
         }
@@ -58,8 +58,8 @@ export class JsonExporter extends BaseMessageExporter {
 
     const dateRange = timestamps.length > 0
       ? {
-          first: timestamps[0].toISOString(),
-          last: timestamps[timestamps.length - 1].toISOString(),
+          first: timestamps[0]?.toISOString() ?? "",
+          last: timestamps[timestamps.length - 1]?.toISOString() ?? "",
         }
       : null;
 
@@ -174,7 +174,7 @@ export class JsonExporter extends BaseMessageExporter {
     }
 
     // Write to file
-    const jsonString = JSON.stringify(exportData, null, indent);
+    const jsonString = JSON.stringify(exportData, null, indent ?? undefined);
     await writeFile(finalPath, jsonString, "utf8");
 
     const duration = Date.now() - startTime;

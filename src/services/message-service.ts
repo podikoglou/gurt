@@ -41,8 +41,8 @@ export class MessageService {
         } else {
           // Update cursor based on sort direction
           cursor = sortBy === "oldest"
-            ? messages[messages.length - 1].id
-            : messages[0].id;
+            ? messages[messages.length - 1]?.id
+            : messages[0]?.id;
 
           // Apply filters if provided
           const filteredMessages = config.filters
@@ -218,7 +218,7 @@ export class MessageService {
       .sort((a, b) => a.getTime() - b.getTime());
 
     const dateRange = timestamps.length > 0
-      ? { first: timestamps[0], last: timestamps[timestamps.length - 1] }
+      ? { first: timestamps[0]!, last: timestamps[timestamps.length - 1]! }
       : null;
 
     return {

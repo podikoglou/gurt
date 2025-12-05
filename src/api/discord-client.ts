@@ -5,12 +5,15 @@ import type {
   ApiClient,
   RateLimiter,
   RetryConfig,
+} from "./client";
+import {
   ApiError,
   RateLimitError,
   AuthenticationError,
   PermissionError,
   NotFoundError,
-} from "./client.js";
+  DEFAULT_RETRY_CONFIG,
+} from "./client";
 import type {
   User,
   Channel,
@@ -18,9 +21,8 @@ import type {
   Message,
   Snowflake,
   RateLimitInfo,
-} from "../types/discord.js";
-import { extractRoute } from "./rate-limiter.js";
-import { DEFAULT_RETRY_CONFIG } from "./client.js";
+} from "../types/discord";
+import { extractRoute } from "./rate-limiter";
 
 // Discord API client with authentication, rate limiting, and retry logic
 export class DiscordApiClient implements ApiClient {
@@ -76,7 +78,7 @@ export class DiscordApiClient implements ApiClient {
 
             // Handle rate limit errors
             if (response.status === 429) {
-              const data = await response.json().catch(() => ({}));
+              const data = await response.json().catch(() => ({})) as any;
               throw new RateLimitError(
                 data.message || "Rate limited",
                 data.retry_after || 1,

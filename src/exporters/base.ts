@@ -56,7 +56,7 @@ export abstract class BaseMessageExporter implements MessageExporter {
       .sort((a, b) => a.getTime() - b.getTime());
 
     const dateRange = timestamps.length > 0
-      ? { first: timestamps[0], last: timestamps[timestamps.length - 1] }
+      ? { first: timestamps[0]!, last: timestamps[timestamps.length - 1]! }
       : { first: new Date(), last: new Date() };
 
     return {

@@ -1,6 +1,7 @@
 // Rate limiting implementation using token bucket algorithm
 
-import type { RateLimiter, RateLimitInfo } from "./client.js";
+import type { RateLimiter } from "./client";
+import type { RateLimitInfo } from "../types/discord";
 
 // Information about a rate limit bucket for a specific route
 interface RouteBucket {
@@ -138,5 +139,5 @@ export function extractRoute(endpoint: string): string {
 
   // Default to the first path segment
   const match = endpoint.match(/\/(\w+)/);
-  return match ? match[1] : "default";
+  return match ? (match[1] ?? "default") : "default";
 }

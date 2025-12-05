@@ -107,6 +107,8 @@ export class ExportOrchestrator {
 
     for (let i = 0; i < configs.length; i++) {
       const config = configs[i];
+      if (!config) continue;
+
       console.log(`Exporting channel ${i + 1}/${configs.length}: ${config.channelId}`);
 
       try {

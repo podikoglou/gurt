@@ -116,7 +116,7 @@ async function handleQueryChannels(
   console.log(`Fetching channels for guild ${args.guildId}...\n`);
 
   try {
-    const channels = await channelService.getGuildTextChannels(args.guildId);
+    const channels = await channelService.getGuildTextChannels(args.guildId as any);
 
     if (channels.length === 0) {
       console.log("No text channels found in this guild.");

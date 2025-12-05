@@ -7,6 +7,7 @@ import {
   option,
   or,
   withDefault,
+  type InferValue,
 } from "@optique/core/parser";
 import { path } from "@optique/run";
 
@@ -71,4 +72,4 @@ export const cliParser = or(
 );
 
 // Export types for TypeScript usage
-export type CliArgs = ReturnType<typeof cliParser>;
+export type CliArgs = InferValue<typeof cliParser>;
