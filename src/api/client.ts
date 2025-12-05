@@ -1,4 +1,4 @@
-import type { Snowflake, RateLimitInfo } from "../types/discord.js";
+import type { RateLimitInfo } from "../types/discord.js";
 
 /**
  * Generic HTTP API client interface for Discord API operations
@@ -29,7 +29,6 @@ export interface RetryConfig {
   maxDelay: number;
   backoffMultiplier: number;
   retryableStatusCodes: number[];
-  retryableErrors: string[];
 }
 
 /**
@@ -44,13 +43,6 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxDelay: 10000,
   backoffMultiplier: 2,
   retryableStatusCodes: [429, 500, 502, 503, 504],
-  retryableErrors: [
-    "NETWORK_ERROR",
-    "TIMEOUT",
-    "ECONNRESET",
-    "ECONNREFUSED",
-    "ENOTFOUND",
-  ],
 };
 export class ApiError extends Error {
   constructor(

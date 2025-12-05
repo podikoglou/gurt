@@ -14,9 +14,6 @@ import {
   DEFAULT_RETRY_CONFIG,
 } from "./client";
 import type {
-  Channel,
-  Guild,
-  Message,
   Snowflake,
   RateLimitInfo,
 } from "../types/discord";

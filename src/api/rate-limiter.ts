@@ -23,7 +23,6 @@ interface RouteBucket {
 export class TokenBucketRateLimiter implements RateLimiter {
   private readonly buckets = new Map<string, RouteBucket>();
   private globalResetAt = 0;
-  private readonly defaultLimit = 50;
 
   async checkLimit(route: string): Promise<void> {
     const now = Date.now();
@@ -76,32 +75,6 @@ export class TokenBucketRateLimiter implements RateLimiter {
     const now = Date.now();
     return Math.max(0, this.globalResetAt - now);
   }
-
-  cleanup(): void {
-    const now = Date.now();
-    for (const [route, bucket] of this.buckets.entries()) {
-      if (bucket.resetAt <= now) {
-        this.buckets.delete(route);
-      }
-    }
-  }
-
-  getBucketInfo(route: string): RouteBucket | null {
-    const bucket = this.buckets.get(route);
-    if (!bucket) return null;
-
-    const now = Date.now();
-    return {
-      ...bucket,
-      remaining: bucket.resetAt <= now ? bucket.limit : bucket.remaining,
-    };
-  }
-
-  reset(): void {
-    this.buckets.clear();
-    this.globalResetAt = 0;
-  }
-
 }
 
 /**

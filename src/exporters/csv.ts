@@ -276,49 +276,6 @@ export class CsvExporter extends BaseExporter {
     return rows;
   }
 
-  /**
-   * Parse a CSV row, handling quoted values
-   */
-  private parseCSVRow(row: string): string[] {
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (let i = 0; i < row.length; i++) {
-      const char = row[i];
-      const nextChar = row[i + 1];
-
-      if (inQuotes) {
-        if (char === '"' && nextChar === '"') {
-          // Escaped quote
-          current += '"';
-          i++; // Skip the next quote
-        } else if (char === '"') {
-          // End of quoted value
-          inQuotes = false;
-        } else {
-          current += char;
-        }
-      } else {
-        if (char === '"') {
-          // Start of quoted value
-          inQuotes = true;
-        } else if (char === ",") {
-          // End of value
-          values.push(current);
-          current = "";
-        } else {
-          current += char;
-        }
-      }
-    }
-
-    // Don't forget the last value
-    values.push(current);
-
-    return values;
-  }
-
   protected override async onOpenForResume(resumeInfo: ResumeInfo): Promise<void> {
     // For CSV, we just need to set the index so we don't try to rewrite existing content
     // The existing file already has the header and previous messages
