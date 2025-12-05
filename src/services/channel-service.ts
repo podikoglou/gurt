@@ -73,6 +73,6 @@ export class ChannelService {
    * @see CHANNEL_TYPES for the numeric type values
    */
   getChannelTypeDisplay(channel: Channel): string {
-    return CHANNEL_TYPE_DISPLAY[channel.type] || "❓ Unknown";
+    return CHANNEL_TYPE_DISPLAY[channel.type] || "Unknown";
   }
 }

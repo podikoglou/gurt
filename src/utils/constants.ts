@@ -69,19 +69,19 @@ export const CHANNEL_TYPES = {
 } as const;
 
 /**
- * Display names for channel types (with emoji)
+ * Display names for channel types
  */
 export const CHANNEL_TYPE_DISPLAY: Record<number, string> = {
-  [CHANNEL_TYPES.GUILD_TEXT]: "📝 Text",
-  [CHANNEL_TYPES.DM]: "💬 DM",
-  [CHANNEL_TYPES.GUILD_VOICE]: "🔊 Voice",
-  [CHANNEL_TYPES.GROUP_DM]: "👥 Group DM",
-  [CHANNEL_TYPES.GUILD_CATEGORY]: "📁 Category",
-  [CHANNEL_TYPES.GUILD_ANNOUNCEMENT]: "📢 Announcement",
-  [CHANNEL_TYPES.ANNOUNCEMENT_THREAD]: "🧵 Announcement Thread",
-  [CHANNEL_TYPES.PUBLIC_THREAD]: "🧵 Public Thread",
-  [CHANNEL_TYPES.PRIVATE_THREAD]: "🔒 Private Thread",
-  [CHANNEL_TYPES.GUILD_STAGE_VOICE]: "🎤 Stage",
-  [CHANNEL_TYPES.GUILD_DIRECTORY]: "📋 Directory",
-  [CHANNEL_TYPES.GUILD_FORUM]: "💬 Forum",
+  [CHANNEL_TYPES.GUILD_TEXT]: "Text",
+  [CHANNEL_TYPES.DM]: "DM",
+  [CHANNEL_TYPES.GUILD_VOICE]: "Voice",
+  [CHANNEL_TYPES.GROUP_DM]: "Group DM",
+  [CHANNEL_TYPES.GUILD_CATEGORY]: "Category",
+  [CHANNEL_TYPES.GUILD_ANNOUNCEMENT]: "Announcement",
+  [CHANNEL_TYPES.ANNOUNCEMENT_THREAD]: "Announcement Thread",
+  [CHANNEL_TYPES.PUBLIC_THREAD]: "Public Thread",
+  [CHANNEL_TYPES.PRIVATE_THREAD]: "Private Thread",
+  [CHANNEL_TYPES.GUILD_STAGE_VOICE]: "Stage",
+  [CHANNEL_TYPES.GUILD_DIRECTORY]: "Directory",
+  [CHANNEL_TYPES.GUILD_FORUM]: "Forum",
 } as const;
