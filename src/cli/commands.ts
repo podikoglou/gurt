@@ -1,4 +1,5 @@
 import { choice, integer, string } from "@optique/core";
+import { message } from "@optique/core/message";
 import { RETRY } from "../utils/constants.js";
 import {
   argument,
@@ -20,14 +21,20 @@ export const queryDmsCommand = command(
   "dm",
   object({
     queryType: constant("dm"),
-  })
+  }),
+  {
+    brief: message`List all DM channels`,
+  }
 );
 
 export const queryGuildsCommand = command(
   "guild",
   object({
     queryType: constant("guild"),
-  })
+  }),
+  {
+    brief: message`List all guilds (servers)`,
+  }
 );
 
 export const queryChannelsCommand = command(
@@ -35,7 +42,10 @@ export const queryChannelsCommand = command(
   object({
     queryType: constant("channel"),
     guildId: argument(string({ metavar: "GUILD_ID" })),
-  })
+  }),
+  {
+    brief: message`List text channels in a guild`,
+  }
 );
 
 // Query command with nested subcommands
@@ -44,12 +54,15 @@ export const queryCommand = command(
   object({
     command: constant("query"),
     subcommand: or(queryDmsCommand, queryGuildsCommand, queryChannelsCommand),
-    verbose: option("-v", "--verbose"),
+    verbose: option("-v", "--verbose", { description: message`Enable verbose output` }),
     tokenType: withDefault(
-      option("-t", "--token-type", string({ metavar: "TYPE" })),
+      option("-t", "--token-type", string({ metavar: "TYPE" }), { description: message`Token type: "user" or "bot"` }),
       "user"
     ),
-  })
+  }),
+  {
+    brief: message`Query Discord resources (DMs, guilds, channels)`,
+  }
 );
 
 // Export command with direct arguments
@@ -58,26 +71,29 @@ export const exportCommand = command(
   object({
     command: constant("export"),
     channel: argument(string({ metavar: "CHANNEL_ID" })),
-    output: optional(option("-o", "--output", path({ metavar: "OUTPUT", mustExist: false, type: "file" }))),
+    output: optional(option("-o", "--output", path({ metavar: "FILE", mustExist: false, type: "file" }), { description: message`Output file path` })),
     format: withDefault(
-      option("-f", "--format", choice(["json", "jsonl", "csv"], { metavar: "FORMAT" })),
+      option("-f", "--format", choice(["json", "jsonl", "csv"], { metavar: "FORMAT" }), { description: message`Output format: json, jsonl, or csv` }),
       "json"
     ),
     batchSize: withDefault(
-      option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: DISCORD_API.MAX_MESSAGES_PER_REQUEST })),
+      option("-b", "--batch-size", integer({ metavar: "SIZE", min: 1, max: DISCORD_API.MAX_MESSAGES_PER_REQUEST }), { description: message`Messages per API request (1-100)` }),
       DISCORD_API.DEFAULT_BATCH_SIZE
     ),
     maxRetries: withDefault(
-      option("-r", "--max-retries", integer({ metavar: "RETRIES", min: 0, max: 10 })),
+      option("-r", "--max-retries", integer({ metavar: "N", min: 0, max: 10 }), { description: message`Max retry attempts on failure` }),
       RETRY.MAX_RETRIES
     ),
-    continue: option("-c", "--continue"),
-    verbose: option("-v", "--verbose"),
+    continue: option("-c", "--continue", { description: message`Resume a previous export` }),
+    verbose: option("-v", "--verbose", { description: message`Enable verbose output` }),
     tokenType: withDefault(
-      option("-t", "--token-type", string({ metavar: "TYPE" })),
+      option("-t", "--token-type", string({ metavar: "TYPE" }), { description: message`Token type: "user" or "bot"` }),
       "user"
     ),
-  })
+  }),
+  {
+    brief: message`Export messages from a channel`,
+  }
 );
 
 // Main CLI parser that combines all commands
