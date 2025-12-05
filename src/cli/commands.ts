@@ -7,6 +7,7 @@ import {
   option,
   or,
   withDefault,
+  flag,
   type InferValue,
 } from "@optique/core/parser";
 import { path } from "@optique/run";
@@ -41,6 +42,7 @@ export const queryCommand = command(
   object({
     command: constant("query"),
     subcommand: or(queryDmsCommand, queryGuildsCommand, queryChannelsCommand),
+    verbose: option("-v", "--verbose"),
   })
 );
 
@@ -62,6 +64,7 @@ export const exportCommand = command(
       option("-b", "--batch-size", integer({ metavar: "BATCH_SIZE", min: 1, max: 100 })),
       100
     ),
+    verbose: option("-v", "--verbose"),
   })
 );
 

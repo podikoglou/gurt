@@ -31,12 +31,15 @@ export class DiscordApiClient implements ApiClient {
   private readonly tokenType: "Bot" | "Bearer";
   private readonly rateLimiter: RateLimiter;
   private readonly retryConfig: RetryConfig;
+  private verbose = false;
 
   constructor(
     token: string,
     rateLimiter: RateLimiter,
-    retryConfig: Partial<RetryConfig> = {}
+    retryConfig: Partial<RetryConfig> = {},
+    verbose = false
   ) {
+    this.verbose = verbose;
     this.token = token;
     this.rateLimiter = rateLimiter;
     this.retryConfig = {
@@ -64,11 +67,15 @@ export class DiscordApiClient implements ApiClient {
         beforeRequest: [
           (request) => {
             // Add authorization header
-            request.headers.set(
-              "Authorization",
-              `${this.tokenType} ${this.token}`
-            );
+            const authHeader = `${this.tokenType} ${this.token}`;
+            request.headers.set("Authorization", authHeader);
             request.headers.set("User-Agent", "Gurt (https://github.com/apodikoglou/gurt, 1.0.0)");
+
+            // Debug logging
+            if (this.verbose || process.env.NODE_ENV === "development" || process.env.DEBUG) {
+              console.error(`[DEBUG] Request: ${request.method} ${request.url}`);
+              console.error(`[DEBUG] Auth header: ${this.tokenType} [${this.token.length} chars]`);
+            }
           },
         ],
         afterResponse: [
@@ -146,7 +153,14 @@ export class DiscordApiClient implements ApiClient {
         // Convert HTTP errors to specific error types
         switch (status) {
           case 401:
-            throw new AuthenticationError(data.message, data);
+            const authMsg = data.message || "Authentication failed";
+            if (this.verbose) {
+              console.error(`\n[VERBOSE] Authentication failed. Please check:\n` +
+                           `1. Your DISCORD_TOKEN is correct\n` +
+                           `2. The token has the right permissions\n` +
+                           `3. The token hasn't expired\n`);
+            }
+            throw new AuthenticationError(authMsg, data);
           case 403:
             throw new PermissionError(data.message, data);
           case 404:

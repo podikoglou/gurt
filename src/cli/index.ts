@@ -19,10 +19,10 @@ function validateEnvironment(): void {
 }
 
 // Initialize services
-function initializeServices() {
+function initializeServices(verbose = false) {
   const token = process.env.DISCORD_TOKEN!;
   const rateLimiter = new TokenBucketRateLimiter();
-  const apiClient = new DiscordApiClient(token, rateLimiter);
+  const apiClient = new DiscordApiClient(token, rateLimiter, {}, verbose);
   const messageService = new MessageService(apiClient);
   const channelService = new ChannelService(apiClient);
 
@@ -45,7 +45,10 @@ function initializeServices() {
 }
 
 // Query handlers
-async function handleQueryDms({ channelService }: ReturnType<typeof initializeServices>): Promise<void> {
+async function handleQueryDms(
+  { channelService }: ReturnType<typeof initializeServices>,
+  verbose = false
+): Promise<void> {
   console.log("Fetching direct message conversations...\n");
 
   try {
@@ -85,7 +88,10 @@ async function handleQueryDms({ channelService }: ReturnType<typeof initializeSe
   }
 }
 
-async function handleQueryGuilds({ channelService }: ReturnType<typeof initializeServices>): Promise<void> {
+async function handleQueryGuilds(
+  { channelService }: ReturnType<typeof initializeServices>,
+  verbose = false
+): Promise<void> {
   console.log("Fetching accessible guilds...\n");
 
   try {
@@ -111,7 +117,8 @@ async function handleQueryGuilds({ channelService }: ReturnType<typeof initializ
 
 async function handleQueryChannels(
   args: { guildId: string },
-  { channelService }: ReturnType<typeof initializeServices>
+  { channelService }: ReturnType<typeof initializeServices>,
+  verbose = false
 ): Promise<void> {
   console.log(`Fetching channels for guild ${args.guildId}...\n`);
 
@@ -176,6 +183,7 @@ async function handleExport(
     output: string;
     format?: string;
     batchSize?: number;
+    verbose?: boolean;
   },
   { exportOrchestrator }: ReturnType<typeof initializeServices>
 ): Promise<void> {
@@ -227,19 +235,22 @@ async function main(): Promise<void> {
 
     // If parsing succeeded, validate environment and initialize services
     validateEnvironment();
-    const services = initializeServices();
+
+    // Determine verbose mode
+    const verbose = !!result.verbose;
+    const services = initializeServices(verbose);
 
     // Route to appropriate handler based on command and subcommand
     if (result.command === "query") {
       switch (result.subcommand.queryType) {
         case "dm":
-          await handleQueryDms(services);
+          await handleQueryDms(services, verbose);
           break;
         case "guild":
-          await handleQueryGuilds(services);
+          await handleQueryGuilds(services, verbose);
           break;
         case "channel":
-          await handleQueryChannels(result.subcommand, services);
+          await handleQueryChannels(result.subcommand, services, verbose);
           break;
         default:
           console.error("Unknown query type:", result);
