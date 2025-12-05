@@ -32,19 +32,19 @@ export class MessageService {
 
         const messages = await this.apiClient.getMessages(channelId, {
           limit: currentBatchSize,
-          ...(sortBy === "oldest" && cursor ? { after: cursor } : {}),
-          ...(sortBy === "newest" && cursor ? { before: cursor } : {}),
+          // Always use 'before' to walk backward through time
+          ...(cursor ? { before: cursor } : {}),
         });
 
         if (messages.length === 0) {
           hasMore = false;
         } else {
           // Extract minimal info for cursor from raw response
-          const firstMessage = messages[0] as any;
+          // Discord returns messages newest first, so the last one is the oldest
           const lastMessage = messages[messages.length - 1] as any;
 
-          // Update cursor based on sort direction
-          cursor = sortBy === "oldest" ? lastMessage?.id : firstMessage?.id;
+          // Always use the oldest message ID as cursor for the next batch
+          cursor = lastMessage?.id;
 
           // Update total count
           totalCount += messages.length;
@@ -67,7 +67,8 @@ export class MessageService {
           yield messages;
 
           // Check if we've got all messages or hit the limit
-          hasMore = messages.length === currentBatchSize && (!limit || totalCount < limit);
+          // Continue only if we got messages AND haven't hit the limit
+          hasMore = messages.length > 0 && (!limit || totalCount < limit);
         }
       } catch (error) {
         console.error(`Failed to fetch messages for channel ${channelId}:`, error);
