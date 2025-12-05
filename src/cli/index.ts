@@ -7,7 +7,6 @@ import { ChannelService } from "../services/channel-service.js";
 import { ExportOrchestrator } from "../core/export-orchestrator.js";
 import { JsonExporter } from "../exporters/json.js";
 
-// Function to validate environment variables
 function validateEnvironment(): void {
   if (!process.env.DISCORD_TOKEN) {
     console.error("Error: DISCORD_TOKEN environment variable is required");
@@ -17,7 +16,6 @@ function validateEnvironment(): void {
   }
 }
 
-// Initialize services
 function initializeServices(verbose = false, tokenType: "bot" | "user" = "user") {
   const token = process.env.DISCORD_TOKEN!;
   const rateLimiter = new TokenBucketRateLimiter();
@@ -25,7 +23,6 @@ function initializeServices(verbose = false, tokenType: "bot" | "user" = "user")
   const messageService = new MessageService(apiClient);
   const channelService = new ChannelService(apiClient);
 
-  // Register exporters
   const exporters = new Map<string, any>();
   exporters.set("json", new JsonExporter());
 
@@ -43,7 +40,6 @@ function initializeServices(verbose = false, tokenType: "bot" | "user" = "user")
   };
 }
 
-// Query handlers
 async function handleQueryDms(
   { channelService }: ReturnType<typeof initializeServices>,
   verbose = false
@@ -174,7 +170,6 @@ async function handleQueryChannels(
   }
 }
 
-// Export handler
 async function handleExport(
   args: {
     channel: string;
@@ -201,7 +196,7 @@ async function handleExport(
       process.stdout.write(`\rProgress: [${bar}${empty}] ${progress.percentage.toFixed(1)}% (${progress.messageCount} messages)`);
     });
 
-    console.log(); // New line after progress bar
+    console.log();
 
     console.log("\nExport completed successfully!");
     console.log(`Messages: ${result.messageCount}`);
@@ -223,23 +218,18 @@ async function handleExport(
   }
 }
 
-// Main CLI function
 async function main(): Promise<void> {
   try {
-    // Parse command line arguments first
     const result = run(cliParser, "gurt", process.argv.slice(2), {
       help: { mode: "option" },
     });
 
-    // If parsing succeeded, validate environment and initialize services
     validateEnvironment();
 
-    // Extract options from result
     const verbose = !!result.verbose;
     const tokenType = (result.tokenType as "bot" | "user") || "user";
     const services = initializeServices(verbose, tokenType);
 
-    // Route to appropriate handler based on command and subcommand
     if (result.command === "query") {
       switch (result.subcommand.queryType) {
         case "dm":
@@ -258,7 +248,6 @@ async function main(): Promise<void> {
     } else if (result.command === "export") {
       await handleExport(result, services);
     } else {
-      // This should never happen due to optique's type safety
       console.error("Unknown command:", result);
       process.exit(1);
     }
@@ -272,7 +261,6 @@ async function main(): Promise<void> {
   }
 }
 
-// Run the CLI if this file is executed directly
 if (import.meta.main) {
   main().catch((error) => {
     console.error("Fatal error:", error);

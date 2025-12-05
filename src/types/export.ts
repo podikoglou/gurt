@@ -1,6 +1,6 @@
-// Export types - simplified for raw Discord responses
-
-// Configuration for exporting messages
+/**
+ * Configuration for message export operations
+ */
 export interface ExportConfig {
   channelId: string;
   outputPath: string;
@@ -15,7 +15,9 @@ export interface ExportConfig {
   filters?: any[];
 }
 
-// Result of an export operation
+/**
+ * Summary of completed export operation
+ */
 export interface ExportResult {
   messageCount: number;
   attachmentCount: number;
@@ -24,17 +26,19 @@ export interface ExportResult {
   endDate: Date | null;
   file: string;
   size: number;
-  duration: number; // Time taken in milliseconds
-  filtered: number; // Number of messages filtered out
-  skipped: number; // Number of messages skipped due to errors
+  duration: number;
+  filtered: number;
+  skipped: number;
 }
 
-// Progress information during export
+/**
+ * Real-time export progress information
+ */
 export interface ExportProgress {
   messageCount: number;
-  totalCount?: number; // Total if known
-  percentage: number; // 0-100
+  totalCount?: number;
+  percentage: number;
   currentMessage?: any;
-  rate: number; // Messages per second
-  eta?: number; // Estimated time remaining in seconds
+  rate: number;
+  eta?: number;
 }

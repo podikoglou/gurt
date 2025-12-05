@@ -1,20 +1,24 @@
-// Message fetching service - works with raw Discord responses
-
 import type { DiscordApiClient } from "../api/discord-client.js";
 import type { Message, Snowflake } from "../types/discord.js";
 import type { ExportConfig, ExportProgress } from "../types/export.js";
 
-// Service for fetching Discord messages
+/**
+ * Service for fetching Discord messages with pagination
+ *
+ * Features:
+ * - Memory-efficient async generator for large channels
+ * - Progress tracking with rate calculation
+ * - Respect for Discord's rate limits
+ */
 export class MessageService {
   constructor(private readonly apiClient: DiscordApiClient) {}
 
-  // Fetch messages with pagination using async generator for memory efficiency
   async *fetchMessagesPaginated(
     channelId: Snowflake,
     config: Partial<ExportConfig> = {},
     onProgress?: (progress: ExportProgress) => void
   ): AsyncGenerator<unknown[], void, unknown> {
-    const batchSize = Math.min(config.batchSize || 100, 100); // Discord max is 100
+    const batchSize = Math.min(config.batchSize || 100, 100);
     const sortBy = config.sortBy || "oldest";
     const limit = config.limit;
 
@@ -25,33 +29,26 @@ export class MessageService {
 
     while (hasMore && (!limit || totalCount < limit)) {
       try {
-        // Adjust batch size if we're approaching the limit
         const currentBatchSize = limit
           ? Math.min(batchSize, limit - totalCount)
           : batchSize;
 
         const messages = await this.apiClient.getMessages(channelId, {
           limit: currentBatchSize,
-          // Always use 'before' to walk backward through time
           ...(cursor ? { before: cursor } : {}),
         });
 
         if (messages.length === 0) {
           hasMore = false;
         } else {
-          // Extract minimal info for cursor from raw response
-          // Discord returns messages newest first, so the last one is the oldest
           const lastMessage = messages[messages.length - 1] as any;
 
-          // Always use the oldest message ID as cursor for the next batch
           cursor = lastMessage?.id;
 
-          // Update total count
           totalCount += messages.length;
 
-          // Calculate progress
           const elapsed = Date.now() - startTime;
-          const rate = totalCount / (elapsed / 1000); // messages per second
+          const rate = totalCount / (elapsed / 1000);
 
           if (onProgress) {
             onProgress({
@@ -66,8 +63,6 @@ export class MessageService {
 
           yield messages;
 
-          // Check if we've got all messages or hit the limit
-          // Continue only if we got messages AND haven't hit the limit
           hasMore = messages.length > 0 && (!limit || totalCount < limit);
         }
       } catch (error) {
@@ -77,7 +72,6 @@ export class MessageService {
     }
   }
 
-  // Fetch all messages and return as an array (for small channels)
   async fetchAllMessages(
     channelId: Snowflake,
     config: Partial<ExportConfig> = {},
@@ -89,7 +83,6 @@ export class MessageService {
       allMessages.push(...batch);
     }
 
-    // Sort messages chronologically using raw timestamps
     allMessages.sort((a: any, b: any) =>
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );

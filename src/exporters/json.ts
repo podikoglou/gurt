@@ -1,26 +1,26 @@
-// JSON message exporter implementation - saves raw Discord responses
-
 import { writeFile } from "node:fs/promises";
 import type { ExportResult } from "../types/export.js";
 
-// JSON exporter - just saves raw Discord responses
+/**
+ * JSON exporter that saves raw Discord API responses
+ *
+ * Maintains complete fidelity to Discord's data structure
+ * without parsing or transforming the content
+ */
 export class JsonExporter {
   async export(messages: unknown[], outputPath: string): Promise<ExportResult> {
     const startTime = Date.now();
 
-    // Ensure .json extension
     const finalPath = outputPath.toLowerCase().endsWith('.json')
       ? outputPath
       : `${outputPath}.json`;
 
-    // Create export with minimal metadata
     const exportData = {
       exportedAt: new Date().toISOString(),
       messageCount: messages.length,
-      messages, // Raw Discord responses
+      messages,
     };
 
-    // Write to file
     const jsonString = JSON.stringify(exportData, null, 2);
     await writeFile(finalPath, jsonString, "utf-8");
 
@@ -29,8 +29,8 @@ export class JsonExporter {
 
     return {
       messageCount: messages.length,
-      attachmentCount: 0, // We don't parse raw responses
-      embedCount: 0, // We don't parse raw responses
+      attachmentCount: 0,
+      embedCount: 0,
       startDate: null,
       endDate: null,
       file: finalPath,

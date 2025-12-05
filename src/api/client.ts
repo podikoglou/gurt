@@ -1,8 +1,8 @@
-// Base API client interfaces and types
-
 import type { Snowflake, RateLimitInfo } from "../types/discord.js";
 
-// Generic API client interface
+/**
+ * Generic HTTP API client interface for Discord API operations
+ */
 export interface ApiClient {
   get<T>(endpoint: string, params?: Record<string, unknown>): Promise<T>;
   post<T>(endpoint: string, body?: unknown): Promise<T>;
@@ -11,14 +11,18 @@ export interface ApiClient {
   delete<T>(endpoint: string): Promise<T>;
 }
 
-// Rate limiter interface
+/**
+ * Rate limiter interface for Discord API rate limit handling
+ */
 export interface RateLimiter {
   checkLimit(route: string): Promise<void>;
   updateLimit(route: string, info: RateLimitInfo): void;
   getGlobalDelay(): number;
 }
 
-// Retry configuration for API requests
+/**
+ * Configuration for retry logic on failed API requests
+ */
 export interface RetryConfig {
   maxRetries: number;
   baseDelay: number;
@@ -28,7 +32,12 @@ export interface RetryConfig {
   retryableErrors: string[];
 }
 
-// Default retry configuration
+/**
+ * Default retry configuration for Discord API
+ * - Exponential backoff with 2x multiplier
+ * - Retries on rate limits (429) and server errors (5xx)
+ * - Handles common network errors
+ */
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxRetries: 3,
   baseDelay: 1000,
@@ -43,8 +52,6 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
     "ENOTFOUND",
   ],
 };
-
-// API error types
 export class ApiError extends Error {
   constructor(
     message: string,

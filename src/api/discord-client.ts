@@ -1,5 +1,3 @@
-// Discord API client implementation using ky HTTP library
-
 import ky, { HTTPError } from "ky";
 import type {
   ApiClient,
@@ -23,7 +21,15 @@ import type {
 } from "../types/discord";
 import { extractRoute } from "./rate-limiter";
 
-// Discord API client with authentication, rate limiting, and retry logic
+/**
+ * Discord API client with authentication, rate limiting, and retry logic
+ *
+ * Features:
+ * - Automatic token management (Bot/User)
+ * - Rate limit handling with respect to Discord's headers
+ * - Exponential backoff retry strategy
+ * - Comprehensive error handling
+ */
 export class DiscordApiClient implements ApiClient {
   private readonly client: typeof ky;
   private readonly token: string;
@@ -45,27 +51,21 @@ export class DiscordApiClient implements ApiClient {
       ...retryConfig,
     };
 
-    // Format token based on type
     if (token.startsWith("Bot ") || token.startsWith("Bearer ")) {
-      // Token already has prefix, use as-is
       this.token = token;
     } else {
-      // Add appropriate prefix
       this.token = tokenType === "bot" ? `Bot ${token}` : token;
     }
 
-    // Configure ky client
     this.client = ky.create({
       prefixUrl: "https://discord.com/api/v10",
       timeout: 30000,
       hooks: {
         beforeRequest: [
           (request) => {
-            // Add authorization header
             request.headers.set("Authorization", this.token);
             request.headers.set("User-Agent", "Gurt (https://github.com/apodikoglou/gurt, 1.0.0)");
 
-            // Debug logging
             if (this.verbose || process.env.NODE_ENV === "development" || process.env.DEBUG) {
               console.error(`[DEBUG] Request: ${request.method} ${request.url}`);
             }
@@ -73,10 +73,8 @@ export class DiscordApiClient implements ApiClient {
         ],
         afterResponse: [
           async (request, options, response) => {
-            // Update rate limit headers
             await this.updateRateLimits(request, response);
 
-            // Handle rate limit errors
             if (response.status === 429) {
               const data = await response.json().catch(() => ({})) as any;
               throw new RateLimitError(
@@ -91,10 +89,8 @@ export class DiscordApiClient implements ApiClient {
         beforeRetry: [
           async ({ error, retryCount }) => {
             if (error instanceof RateLimitError && !error.global) {
-              // For non-global rate limits, wait the specified time
               await this.delay(error.retryAfter * 1000);
             } else {
-              // Exponential backoff for other errors
               const delay = Math.min(
                 this.retryConfig.baseDelay *
                   Math.pow(this.retryConfig.backoffMultiplier, retryCount),
@@ -113,7 +109,6 @@ export class DiscordApiClient implements ApiClient {
     });
   }
 
-  // Generic HTTP method with rate limiting and error handling
   async request<T>(
     method: string,
     endpoint: string,
@@ -122,7 +117,6 @@ export class DiscordApiClient implements ApiClient {
   ): Promise<T> {
     const route = extractRoute(endpoint);
 
-    // Wait for rate limit if needed
     await this.rateLimiter.checkLimit(route);
 
     try {
@@ -132,7 +126,6 @@ export class DiscordApiClient implements ApiClient {
         searchParams: params ? new URLSearchParams(params as Record<string, string>) : undefined,
       });
 
-      // Handle 204 No Content
       if (response.status === 204) {
         return null as T;
       }
@@ -143,7 +136,6 @@ export class DiscordApiClient implements ApiClient {
         const status = error.response.status;
         const data = await error.response.json().catch(() => ({}));
 
-        // Convert HTTP errors to specific error types
         switch (status) {
           case 401:
             const authMsg = data.message || "Authentication failed";
@@ -160,7 +152,6 @@ export class DiscordApiClient implements ApiClient {
           case 404:
             throw new NotFoundError(data.message, data);
           case 429:
-            // Should be handled by afterResponse hook, but just in case
             throw new RateLimitError(
               data.message || "Rate limited",
               data.retry_after || 1,
@@ -176,10 +167,8 @@ export class DiscordApiClient implements ApiClient {
             );
         }
       } else if (error instanceof RateLimitError) {
-        // Re-throw rate limit errors
         throw error;
       } else if (error instanceof Error) {
-        // Wrap other errors
         throw new ApiError(error.message);
       } else {
         throw new ApiError("Unknown error occurred");
@@ -225,7 +214,6 @@ export class DiscordApiClient implements ApiClient {
     if (options.after) params.after = options.after;
     if (options.around) params.around = options.around;
 
-    // Return raw Discord responses
     return this.get<unknown[]>(`channels/${channelId}/messages`, params);
   }
 
@@ -248,8 +236,6 @@ export class DiscordApiClient implements ApiClient {
   async getChannel(channelId: Snowflake): Promise<unknown> {
     return this.get<unknown>(`channels/${channelId}`);
   }
-
-  // Private helper methods
 
   private async updateRateLimits(request: Request, response: Response): Promise<void> {
     const route = extractRoute(request.url);

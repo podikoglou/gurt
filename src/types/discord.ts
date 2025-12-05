@@ -1,34 +1,48 @@
-// Discord API type definitions for the chat exporter
-// Following gurt philosophy: model ONLY what we need, save raw responses
+/**
+ * Discord API type definitions for the chat exporter
+ *
+ * Follows gurt philosophy: model ONLY what we need, save raw responses
+ */
 
-// Branded type for Discord snowflake IDs
+/**
+ * Branded type for Discord snowflake IDs
+ * Provides type safety while maintaining string serialization
+ */
 export type Snowflake = string & { readonly __brand: unique symbol };
 
-// Minimal message type - only what we need for pagination and export
+/**
+ * Minimal message interface containing only fields needed for pagination
+ */
 export interface Message {
   id: Snowflake;
-  channel_id: Snowflake; // Use Discord's field names
-  timestamp: string; // ISO 8601 - needed for sorting
+  channel_id: Snowflake;
+  timestamp: string;
 }
 
-// Channel info - minimal needed for export
+/**
+ * Channel information needed for export operations
+ */
 export interface Channel {
   id: Snowflake;
-  type: number; // Discord's channel type number
+  type: number;
   name?: string;
   topic?: string;
   nsfw?: boolean;
   parent_id?: Snowflake;
-  recipient_ids?: Snowflake[]; // For DMs
+  recipient_ids?: Snowflake[];
 }
 
-// Guild info - minimal needed
+/**
+ * Guild information needed for channel listings
+ */
 export interface Guild {
   id: Snowflake;
   name: string;
 }
 
-// Rate limit information from Discord API
+/**
+ * Rate limit headers from Discord API responses
+ */
 export interface RateLimitInfo {
   limit: number;
   remaining: number;
@@ -37,7 +51,9 @@ export interface RateLimitInfo {
   global: boolean;
 }
 
-// Helper function to create a snowflake from a string
+/**
+ * Type-safe constructor for Snowflake IDs
+ */
 export function createSnowflake(id: string): Snowflake {
   return id as Snowflake;
 }
