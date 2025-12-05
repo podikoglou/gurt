@@ -1,38 +1,18 @@
-// Export-specific type definitions for the Discord chat exporter
-
-import type { Message } from "./discord.js";
+// Export types - simplified for raw Discord responses
 
 // Configuration for exporting messages
 export interface ExportConfig {
   channelId: string;
   outputPath: string;
-  format: ExportFormat;
+  format: string;
   batchSize: number;
+  sortBy?: "oldest" | "newest";
+  limit?: number;
   dateRange?: {
     from: Date;
     to: Date;
   };
-  includeAttachments: boolean;
-  includeEmbeds: boolean;
-  sortBy: "oldest" | "newest";
-  filters?: MessageFilter[];
-  // Optional: limit number of messages to export
-  limit?: number;
-}
-
-// Supported export formats
-export enum ExportFormat {
-  JSON = "json",
-  CSV = "csv",
-  HTML = "html",
-  MARKDOWN = "markdown",
-  TXT = "txt",
-}
-
-// Message filter for selective export
-export interface MessageFilter {
-  type: "user" | "content" | "date" | "hasAttachments" | "hasEmbeds" | "authorId";
-  value: string | RegExp | Date | boolean;
+  filters?: any[];
 }
 
 // Result of an export operation
@@ -54,30 +34,7 @@ export interface ExportProgress {
   messageCount: number;
   totalCount?: number; // Total if known
   percentage: number; // 0-100
-  currentMessage?: Message;
+  currentMessage?: any;
   rate: number; // Messages per second
   eta?: number; // Estimated time remaining in seconds
-}
-
-// Statistics about exported data
-export interface ExportStats {
-  totalMessages: number;
-  uniqueAuthors: number;
-  dateRange: {
-    first: Date;
-    last: Date;
-  };
-  attachments: {
-    count: number;
-    totalSize: number;
-    types: Record<string, number>;
-  };
-  reactions: {
-    count: number;
-    unique: number;
-  };
-  embeds: {
-    count: number;
-    types: Record<string, number>;
-  };
 }

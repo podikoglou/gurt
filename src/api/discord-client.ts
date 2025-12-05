@@ -15,7 +15,6 @@ import {
   DEFAULT_RETRY_CONFIG,
 } from "./client";
 import type {
-  User,
   Channel,
   Guild,
   Message,
@@ -218,7 +217,7 @@ export class DiscordApiClient implements ApiClient {
       after?: Snowflake;
       around?: Snowflake;
     } = {}
-  ): Promise<Message[]> {
+  ): Promise<unknown[]> {
     const params: Record<string, string> = {};
 
     if (options.limit) params.limit = options.limit.toString();
@@ -226,35 +225,28 @@ export class DiscordApiClient implements ApiClient {
     if (options.after) params.after = options.after;
     if (options.around) params.around = options.around;
 
-    return this.get<Message[]>(`channels/${channelId}/messages`, params);
+    // Return raw Discord responses
+    return this.get<unknown[]>(`channels/${channelId}/messages`, params);
   }
 
-  async getMessage(channelId: Snowflake, messageId: Snowflake): Promise<Message> {
-    return this.get<Message>(`channels/${channelId}/messages/${messageId}`);
+  async getMessage(channelId: Snowflake, messageId: Snowflake): Promise<unknown> {
+    return this.get<unknown>(`channels/${channelId}/messages/${messageId}`);
   }
 
-  async getDmChannels(): Promise<Channel[]> {
-    return this.get<Channel[]>("users/@me/channels");
+  async getDmChannels(): Promise<unknown[]> {
+    return this.get<unknown[]>("users/@me/channels");
   }
 
-  async getGuilds(): Promise<Guild[]> {
-    return this.get<Guild[]>("users/@me/guilds");
+  async getGuilds(): Promise<unknown[]> {
+    return this.get<unknown[]>("users/@me/guilds");
   }
 
-  async getGuildChannels(guildId: Snowflake): Promise<Channel[]> {
-    return this.get<Channel[]>(`guilds/${guildId}/channels`);
+  async getGuildChannels(guildId: Snowflake): Promise<unknown[]> {
+    return this.get<unknown[]>(`guilds/${guildId}/channels`);
   }
 
-  async getChannel(channelId: Snowflake): Promise<Channel> {
-    return this.get<Channel>(`channels/${channelId}`);
-  }
-
-  async getUser(userId: Snowflake): Promise<User> {
-    return this.get<User>(`users/${userId}`);
-  }
-
-  async getCurrentUser(): Promise<User> {
-    return this.get<User>("users/@me");
+  async getChannel(channelId: Snowflake): Promise<unknown> {
+    return this.get<unknown>(`channels/${channelId}`);
   }
 
   // Private helper methods

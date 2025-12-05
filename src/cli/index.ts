@@ -6,7 +6,6 @@ import { MessageService } from "../services/message-service.js";
 import { ChannelService } from "../services/channel-service.js";
 import { ExportOrchestrator } from "../core/export-orchestrator.js";
 import { JsonExporter } from "../exporters/json.js";
-import { ExportFormat } from "../types/export.js";
 
 // Function to validate environment variables
 function validateEnvironment(): void {
@@ -28,7 +27,7 @@ function initializeServices(verbose = false, tokenType: "bot" | "user" = "user")
 
   // Register exporters
   const exporters = new Map<string, any>();
-  exporters.set(ExportFormat.JSON, new JsonExporter());
+  exporters.set("json", new JsonExporter());
 
   const exportOrchestrator = new ExportOrchestrator(
     messageService,
@@ -65,7 +64,7 @@ async function handleQueryDms(
       console.log(`Direct Messages (${dmChannels.length}):`);
       console.log("----------------------------------------");
       for (const dm of dmChannels) {
-        const name = dm.recipientIds.length > 0 ? `User ${dm.recipientIds[0]}` : "Unknown User";
+        const name = dm.recipient_ids && dm.recipient_ids.length > 0 ? `User ${dm.recipient_ids[0]}` : "Unknown User";
         console.log(`  ${dm.id} - ${name}`);
       }
       console.log();
@@ -76,7 +75,7 @@ async function handleQueryDms(
       console.log(`Group DMs (${groupDmChannels.length}):`);
       console.log("----------------------------------------");
       for (const groupDm of groupDmChannels) {
-        const name = groupDm.name || `Group (${groupDm.recipientIds.length} members)`;
+        const name = groupDm.name || `Group (${groupDm.recipient_ids?.length || 0} members)`;
         console.log(`  ${groupDm.id} - ${name}`);
       }
       console.log();
@@ -105,8 +104,7 @@ async function handleQueryGuilds(
     console.log(`Guilds (${guilds.length}):`);
     console.log("----------------------------------------");
     for (const guild of guilds) {
-      const memberCount = guild.memberCount ? ` (${guild.memberCount} members)` : "";
-      console.log(`  ${guild.id} - ${guild.name}${memberCount}`);
+      console.log(`  ${guild.id} - ${guild.name}`);
     }
     console.log();
     console.log(`Total: ${guilds.length} guilds`);
@@ -135,11 +133,11 @@ async function handleQueryChannels(
     const uncategorized: typeof channels = [];
 
     for (const channel of channels) {
-      if (channel.parentId) {
-        if (!categories.has(channel.parentId)) {
-          categories.set(channel.parentId, []);
+      if (channel.parent_id) {
+        if (!categories.has(channel.parent_id)) {
+          categories.set(channel.parent_id, []);
         }
-        categories.get(channel.parentId)!.push(channel);
+        categories.get(channel.parent_id)!.push(channel);
       } else {
         uncategorized.push(channel);
       }
