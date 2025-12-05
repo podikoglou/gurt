@@ -1,0 +1,16 @@
+{
+  "name": "gurt",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@optique/core": "^0.7.2",
+    "@optique/run": "^0.7.2"
+  }
+}
