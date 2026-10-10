@@ -87,8 +87,8 @@ export <CHANNEL_ID>
 While `npx gurt-export` works without installing, you can also:
 
 ```bash
-# Install globally with bun
-bun install -g gurt-export
+# Install globally with npm
+npm install -g gurt-export
 
 # Then use directly
 gurt-export export CHANNEL_ID
@@ -97,8 +97,8 @@ gurt-export export CHANNEL_ID
 Or with bun/pnpm:
 
 ```bash
-bunx gurt-export export CHANNEL_ID
-pnpx gurt-export export CHANNEL_ID
+bun install -g gurt-export export CHANNEL_ID
+pnpm install -g gurt-export export CHANNEL_ID
 ```
 
 ## License
