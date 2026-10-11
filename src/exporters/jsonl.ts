@@ -1,6 +1,6 @@
 import { BaseExporter } from "./base.js";
 import type { ResumeInfo } from "../types/export.js";
-import { fileExists, readFile, writeFile } from "../utils/fs.js";
+import { appendFile, countLines, fileExists, readHead, readTail, writeFile } from "../utils/fs.js";
 
 /**
  * JSONL (JSON Lines) exporter that saves messages one per line
@@ -68,10 +68,7 @@ export class JsonlExporter extends BaseExporter {
     const newMessages = this.messages.slice(this.lastWrittenIndex);
     const lines = newMessages.map((msg) => JSON.stringify(msg)).join("\n");
 
-    const existing = await readFile(this.outputPath);
-    // Ensure we don't double up newlines when appending
-    const separator = existing.endsWith("\n") ? "" : "\n";
-    await writeFile(this.outputPath, existing + separator + lines + "\n");
+    await appendFile(this.outputPath, lines + "\n");
 
     this.lastWrittenIndex = this.messages.length;
   }
@@ -101,31 +98,48 @@ export class JsonlExporter extends BaseExporter {
       throw new Error(`Export file not found: ${filePath}`);
     }
 
-    const text = await readFile(filePath);
-    const lines = text.trim().split("\n").filter((line) => line.length > 0);
+    const head = await readHead(filePath, 65536);
+    const headLines = head.trim().split("\n").filter((line) => line.length > 0);
 
-    if (lines.length === 0) {
+    if (headLines.length === 0) {
       throw new Error("Export file is empty");
     }
 
     // First line should be metadata
     let hasMetadata = false;
     try {
-      const firstLine = JSON.parse(lines[0]!);
+      const firstLine = JSON.parse(headLines[0]!);
       hasMetadata = firstLine._type === "metadata";
     } catch {
       // First line isn't valid JSON or isn't metadata
     }
 
-    const messageLines = hasMetadata ? lines.slice(1) : lines;
-
-    if (messageLines.length === 0) {
+    const firstMsgLine = hasMetadata ? headLines[1] : headLines[0];
+    if (!firstMsgLine) {
       throw new Error("Export file contains no messages to resume from");
     }
 
-    // Parse the last message line to get the oldest message ID
+    let firstMessage: { channel_id?: string };
+    try {
+      firstMessage = JSON.parse(firstMsgLine);
+    } catch (e) {
+      throw new Error(`Failed to parse first message line: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
+    if (!firstMessage.channel_id || typeof firstMessage.channel_id !== "string") {
+      throw new Error("Invalid message format: missing 'channel_id' field");
+    }
+
+    // Parse the last message line to get the oldest message ID from tail
     // (messages are in reverse chronological order - newest first)
-    const lastLine = messageLines[messageLines.length - 1]!;
+    const tail = await readTail(filePath, 65536);
+    const tailLines = tail.trim().split("\n").filter((line) => line.length > 0);
+
+    if (tailLines.length === 0) {
+      throw new Error("Export file contains no messages to resume from");
+    }
+
+    const lastLine = tailLines[tailLines.length - 1]!;
     let lastMessage: { id?: string };
 
     try {
@@ -138,23 +152,13 @@ export class JsonlExporter extends BaseExporter {
       throw new Error("Invalid message format: missing 'id' field");
     }
 
-    // Get channel ID from the first message
-    let firstMessage: { channel_id?: string };
-    try {
-      firstMessage = JSON.parse(messageLines[0]!);
-    } catch (e) {
-      throw new Error(`Failed to parse first message line: ${e instanceof Error ? e.message : String(e)}`);
-    }
-
-    if (!firstMessage.channel_id || typeof firstMessage.channel_id !== "string") {
-      throw new Error("Invalid message format: missing 'channel_id' field");
-    }
+    const totalLines = await countLines(filePath);
+    const messageCount = hasMetadata ? Math.max(0, totalLines - 1) : totalLines;
 
     return {
       lastMessageId: lastMessage.id,
-      existingMessageCount: messageLines.length,
+      existingMessageCount: messageCount,
       channelId: firstMessage.channel_id,
-      // JSONL doesn't need to load all messages - we'll append to the file
     };
   }
 

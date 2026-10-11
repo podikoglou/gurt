@@ -78,17 +78,75 @@ export const getFileSize: (path: string) => Promise<number> = isBun
 
 /**
  * Append content to a file
- * This is an optimized operation that doesn't require reading the file first
+ * Appends directly without loading existing content into memory
  */
-export const appendFile: (path: string, content: string) => Promise<void> = isBun
-  ? async (path, content) => {
-      // Bun doesn't have a native append, so we read + write
-      // For better performance with large files, consider using streams
+export const appendFile: (path: string, content: string) => Promise<void> = async (path, content) => {
+  const fs = await import("node:fs/promises");
+  await fs.appendFile(path, content, "utf-8");
+};
+
+/**
+ * Read the first N bytes of a file as text
+ */
+export const readHead: (path: string, bytes?: number) => Promise<string> = isBun
+  ? async (path, bytes = 65536) => {
       const file = Bun.file(path);
-      const existing = await file.text();
-      await Bun.write(path, existing + content);
+      const size = file.size;
+      return file.slice(0, Math.min(bytes, size)).text();
     }
-  : async (path, content) => {
+  : async (path, bytes = 65536) => {
       const fs = await import("node:fs/promises");
-      await fs.appendFile(path, content, "utf-8");
+      const handle = await fs.open(path, "r");
+      try {
+        const stat = await handle.stat();
+        const readLength = Math.min(bytes, stat.size);
+        const buffer = Buffer.alloc(readLength);
+        await handle.read(buffer, 0, readLength, 0);
+        return buffer.toString("utf-8");
+      } finally {
+        await handle.close();
+      }
     };
+
+/**
+ * Read the last N bytes of a file as text
+ */
+export const readTail: (path: string, bytes?: number) => Promise<string> = isBun
+  ? async (path, bytes = 65536) => {
+      const file = Bun.file(path);
+      const size = file.size;
+      const start = Math.max(0, size - bytes);
+      return file.slice(start, size).text();
+    }
+  : async (path, bytes = 65536) => {
+      const fs = await import("node:fs/promises");
+      const handle = await fs.open(path, "r");
+      try {
+        const stat = await handle.stat();
+        const readLength = Math.min(bytes, stat.size);
+        const position = Math.max(0, stat.size - readLength);
+        const buffer = Buffer.alloc(readLength);
+        await handle.read(buffer, 0, readLength, position);
+        return buffer.toString("utf-8");
+      } finally {
+        await handle.close();
+      }
+    };
+
+/**
+ * Fast newline count across a file using streams without loading into memory
+ */
+export const countLines: (path: string) => Promise<number> = async (path) => {
+  const fs = await import("node:fs");
+  return new Promise((resolve, reject) => {
+    let count = 0;
+    const stream = fs.createReadStream(path);
+    stream.on("data", (chunk: Buffer) => {
+      for (let i = 0; i < chunk.length; i++) {
+        if (chunk[i] === 0x0a) count++;
+      }
+    });
+    stream.on("end", () => resolve(count));
+    stream.on("error", reject);
+  });
+};
