@@ -1,6 +1,6 @@
 import { BaseExporter } from "./base.js";
 import type { ResumeInfo } from "../types/export.js";
-import { fileExists, readFile, writeFile } from "../utils/fs.js";
+import { appendFile, countLines, fileExists, readHead, readTail, writeFile } from "../utils/fs.js";
 
 /**
  * CSV exporter that saves messages in a tabular format
@@ -82,10 +82,7 @@ export class CsvExporter extends BaseExporter {
     const newMessages = this.messages.slice(this.lastWrittenIndex);
     const rows = newMessages.map((msg) => this.messageToRow(msg)).join("\n");
 
-    const existing = await readFile(this.outputPath);
-    // Ensure we don't double up newlines when appending
-    const separator = existing.endsWith("\n") ? "" : "\n";
-    await writeFile(this.outputPath, existing + separator + rows + "\n");
+    await appendFile(this.outputPath, rows + "\n");
 
     this.lastWrittenIndex = this.messages.length;
   }
@@ -163,54 +160,57 @@ export class CsvExporter extends BaseExporter {
       throw new Error(`Export file not found: ${filePath}`);
     }
 
-    const text = await readFile(filePath);
-    const rows = this.parseCSVFile(text);
+    const head = await readHead(filePath, 65536);
+    const headRows = this.parseCSVFile(head);
 
-    if (rows.length === 0) {
+    if (headRows.length === 0) {
       throw new Error("Export file is empty");
     }
 
     // First row should be the header
-    const columns = rows[0]!;
+    const columns = headRows[0]!;
 
     const idIndex = columns.indexOf("id");
     if (idIndex === -1) {
       throw new Error("Invalid CSV export: missing 'id' column in header");
     }
 
-    const dataRows = rows.slice(1);
-
-    if (dataRows.length === 0) {
-      throw new Error("Export file contains no messages to resume from");
-    }
-
-    // Parse the last row to get the oldest message ID
-    // (messages are in reverse chronological order - newest first)
-    const lastRow = dataRows[dataRows.length - 1]!;
-    const lastMessageId = lastRow[idIndex];
-
-    if (!lastMessageId) {
-      throw new Error("Invalid CSV row: missing 'id' value");
-    }
-
-    // Get channel_id from the first data row
     const channelIdIndex = columns.indexOf("channel_id");
     if (channelIdIndex === -1) {
       throw new Error("Invalid CSV export: missing 'channel_id' column in header");
     }
 
+    const dataRows = headRows.slice(1);
+    if (dataRows.length === 0) {
+      throw new Error("Export file contains no messages to resume from");
+    }
+
     const firstRow = dataRows[0]!;
     const channelId = firstRow[channelIdIndex];
-
     if (!channelId) {
       throw new Error("Invalid CSV row: missing 'channel_id' value");
     }
 
+    // Parse the tail to get the last message row
+    const tail = await readTail(filePath, 65536);
+    const tailRows = this.parseCSVFile(tail);
+    if (tailRows.length === 0) {
+      throw new Error("Export file contains no messages to resume from");
+    }
+
+    const lastRow = tailRows[tailRows.length - 1]!;
+    const lastMessageId = lastRow[idIndex];
+    if (!lastMessageId) {
+      throw new Error("Invalid CSV row: missing 'id' value");
+    }
+
+    const totalLines = await countLines(filePath);
+    const messageCount = Math.max(0, totalLines - 1);
+
     return {
       lastMessageId,
-      existingMessageCount: dataRows.length,
+      existingMessageCount: messageCount,
       channelId,
-      // CSV doesn't need to load all messages - we'll append to the file
     };
   }
 
